@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { peoples } from '@/app/lib/peoples';
 import { createComment, deleteComment, deletePost, getPostById, toggleLike, updateComment } from '@/app/lib/api/posts';
-import { AlertTriangle, Loader2, Trash2, X } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, Loader2, MoreVertical, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCurrentUser, User } from '@/app/lib/api/user';
 
@@ -40,6 +40,8 @@ export default function PostPage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCommentActions, setShowCommentActions] = useState<string | null>(null);
+  const [showPostActions, setShowPostActions] = useState(false);
 
   const handleDeletePost = async () => {
     if (!post || isDeleting) return;
@@ -63,7 +65,7 @@ export default function PostPage() {
         }
       }
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error(error);
       toast.error('Произошла ошибка при удалении поста');
     } finally {
       setIsDeleting(false);
@@ -105,6 +107,7 @@ export default function PostPage() {
     setEditingComment(comment);
     setEditText(comment.content);
     setIsModalOpen(true);
+    setShowCommentActions(null);
   };
 
   const closeEditModal = () => {
@@ -144,7 +147,7 @@ export default function PostPage() {
         }
       }
     } catch (error) {
-      console.error('Error updating comment:', error);
+      console.error(error);
       toast.error('Произошла ошибка при обновлении комментария');
     } finally {
       setIsEditing(false);
@@ -176,7 +179,7 @@ export default function PostPage() {
         }
       }
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error(error);
     } finally {
       setIsLiking(false);
     }
@@ -223,8 +226,10 @@ export default function PostPage() {
       await navigator.clipboard.writeText(url);
       setShowCopied(true);
       setTimeout(() => setShowCopied(false), 2000);
+      toast.success('Ссылка скопирована в буфер обмена');
     } catch (error) {
       console.error(error);
+      toast.error('Не удалось скопировать ссылку');
     }
   };
 
@@ -235,10 +240,26 @@ export default function PostPage() {
 
   const formatDate = (date: Date) => {
     const postDate = new Date(date);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - postDate.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Сегодня, ' + postDate.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } else if (diffDays === 1) {
+      return 'Вчера, ' + postDate.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    
     return postDate.toLocaleDateString('ru-RU', {
       day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      month: 'short',
+      year: diffDays > 365 ? 'numeric' : undefined,
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -254,6 +275,7 @@ export default function PostPage() {
         comments: prevPost.comments.filter((comment: Comment) => comment.id !== commentId),
         commentsCount: prevPost.commentsCount - 1,
       }));
+      setShowCommentActions(null);
     } else {
       if (result.isAuthError) {
         toast.error('Это не ваш комментарий', {
@@ -270,11 +292,11 @@ export default function PostPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF9F9] py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#FFF9F9] pt-24 pb-8 px-4">
+        <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <Loader2 className="animate-spin text-[#FF7340]" />
-            <p className="text-white text-xl">Загрузка поста...</p>
+            <Loader2 className="animate-spin text-[#FF7340] mx-auto w-8 h-8 mb-4" />
+            <p className="text-gray-600">Загрузка поста...</p>
           </div>
         </div>
       </div>
@@ -283,13 +305,13 @@ export default function PostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#FFF9F9] py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Пост не найден</h1>
+      <div className="min-h-screen bg-[#FFF9F9] pt-24 pb-8 px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Пост не найден</h1>
           <p className="text-gray-600 mb-6">Запрашиваемый пост не существует или был удален</p>
           <button
             onClick={() => router.push('/forum')}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg"
+            className="bg-[#FF7340] hover:bg-[#FF4500] text-white font-semibold py-2 px-6 rounded-lg cursor-pointer"
           >
             Вернуться к форуму
           </button>
@@ -299,13 +321,13 @@ export default function PostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9F9] relative">
+    <div className="min-h-screen bg-[#FFF9F9] pt-20">
       {/* Модальное окно редактирования комментария */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 animate-fadeIn">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Редактировать комментарий</h2>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 animate-fadeIn">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Редактировать комментарий</h2>
               <button
                 onClick={closeEditModal}
                 className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -314,21 +336,21 @@ export default function PostPage() {
               </button>
             </div>
             
-            <div className="mb-6">
+            <div className="mb-4">
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 placeholder="Введите новый текст комментария..."
                 rows={4}
-                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none"
+                className="w-full px-3 py-2 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none text-sm"
                 autoFocus
               />
             </div>
             
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-2">
               <button
                 onClick={closeEditModal}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                className="px-3 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm cursor-pointer"
                 disabled={isEditing}
               >
                 Отмена
@@ -336,7 +358,7 @@ export default function PostPage() {
               <button
                 onClick={handleUpdateComment}
                 disabled={isEditing || !editText.trim()}
-                className="bg-[#FF7340] hover:bg-[#FF4500] text-white font-semibold py-2 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#FF7340] hover:bg-[#FF4500] text-white font-semibold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
               >
                 {isEditing ? 'Сохранение...' : 'Сохранить'}
               </button>
@@ -345,64 +367,104 @@ export default function PostPage() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      {/* Хедер для мобильных */}
+      <div className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between md:hidden">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-white hover:text-gray-100 cursor-pointer"
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
         >
-          <span>←</span>
-          <span>Назад</span>
+          <ChevronLeft className="w-5 h-5" />
+          <span className="font-medium">Назад</span>
         </button>
+        <div className="w-10"></div>
       </div>
 
-      <div className="mx-auto w-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 md:py-8 max-w-4xl mx-auto">
+        {/* Кнопка назад для десктопа */}
+        <button
+          onClick={() => router.back()}
+          className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-4 cursor-pointer"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span>Назад</span>
+        </button>
+
         {/* Шапка поста */}
-        <div className="bg-white w-4xl rounded-2xl shadow-lg overflow-hidden border border-gray-200 mb-8">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold text-xl">
-                  {post.author.firstName[0]}{post.author.lastName[0]}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 mb-6">
+          <div className="p-4 md:p-6 lg:p-8">
+            {/* Заголовок и автор */}
+            <div className="flex flex-col mb-4 md:mb-6">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold text-sm md:text-base shrink-0">
+                    {post.author.firstName[0]}{post.author.lastName[0]}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-gray-900 text-base md:text-lg truncate">
+                      {post.author.firstName} {post.author.lastName}
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-500">
+                      {formatDate(post.createdAt)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">
-                    {post.author.firstName} {post.author.lastName}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(post.createdAt)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-[#FF7340]/80 text-white rounded-full text-sm font-medium">
-                  Посвящено народу: {getEthnicGroupName(post.ethnicGroupId)}
-                </span>
+                
                 {user?.id === post?.author?.id && (
-                  <div className="absolute top-4 right-4 z-10">
+                  <div className="relative">
                     <button
-                      onClick={() => setShowDeleteModal(true)}
-                      className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg cursor-pointer duration-200"
-                      title="Удалить пост"
+                      onClick={() => setShowPostActions(!showPostActions)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer duration-200"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <MoreVertical className="w-5 h-5 text-gray-600" />
                     </button>
+                    
+                    {showPostActions && (
+                      <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-30 z-10">
+                        <button
+                          onClick={() => {
+                            setShowDeleteModal(true);
+                            setShowPostActions(false);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 w-full text-sm cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Удалить
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+              
+              {/* Народ и кнопка удаления для десктопа */}
+              <div className="flex items-center justify-start gap-2">
+                <span className="px-2 py-1 bg-[#FF7340]/80 text-white rounded-full text-xs md:text-sm font-medium truncate max-w-[70%]">
+                  Народ: {getEthnicGroupName(post.ethnicGroupId)}
+                </span>
+              </div>
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
+            {/* Заголовок поста */}
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 md:mb-4 wrap-break-word">
+              {post.title}
+            </h1>
 
             {/* Слайдер изображений */}
             {post.images.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-4 md:mb-6">
                 <Swiper
                   modules={[Navigation, Pagination, Autoplay]}
-                  navigation
-                  pagination={{ clickable: true }}
+                  navigation={{
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                  }}
+                  pagination={{ 
+                    clickable: true,
+                    dynamicBullets: true,
+                  }}
                   autoplay={{ delay: 5000, disableOnInteraction: false }}
                   loop={post.images.length > 1}
-                  className="h-125 rounded-xl overflow-hidden"
+                  className="h-48 md:h-64 lg:h-80 rounded-lg md:rounded-xl overflow-hidden"
                 >
                   {post.images.map((image: string, index: number) => (
                     <SwiperSlide key={index}>
@@ -412,9 +474,9 @@ export default function PostPage() {
                           alt={`Изображение ${index + 1} к посту "${post.title}"`}
                           className="h-full w-full object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
-                          <div className="text-white">
-                            <p className="text-sm opacity-90">
+                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-2 md:p-3">
+                          <div className="text-white text-xs md:text-sm">
+                            <p className="opacity-90">
                               Изображение {index + 1} из {post.images.length}
                             </p>
                           </div>
@@ -423,137 +485,176 @@ export default function PostPage() {
                     </SwiperSlide>
                   ))}
                 </Swiper>
+                <div className="swiper-button-prev text-white w-8 h-8 !md:w-10 !md:h-10 after:text-sm md:after:text-base"></div>
+                <div className="swiper-button-next text-white w-8 h-8 !md:w-10 !md:h-10 after:text-sm md:after:text-base"></div>
               </div>
             )}
 
             {/* Контент поста */}
-            <div className="prose prose-lg max-w-none mb-8">
-              <div className="text-gray-700 whitespace-pre-line">
+            <div className="mb-4 md:mb-6">
+              <div className="text-gray-700 text-sm md:text-base whitespace-pre-line wrap-break-word">
                 {post.content}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-6">
-              {post.tags.map((tag: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-[#FFF0F0] text-gray-700 rounded-full text-sm">
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {/* Теги */}
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 md:gap-2 mb-4">
+                {post.tags.map((tag: string, index: number) => (
+                  <span key={index} className="px-2 py-0.5 md:px-3 md:py-1 bg-[#FFF0F0] text-gray-700 rounded-full text-xs md:text-sm">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Кнопки взаимодействия */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-6">
+            <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-4 md:gap-6">
                 <button
                   onClick={() => handleToggleLike()}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer"
+                  disabled={isLiking}
                 >
-                  <span className="text-2xl">{post.likedByUser ? <img src="/images/likefill.svg" alt="" className="aspect-square w-6" /> : <img src="/images/like.svg" alt="" className="aspect-square w-6" />}</span>
-                  <span className="font-medium">{post.likes}</span>
+                  <span className="text-xl md:text-2xl">
+                    {post.likedByUser ? (
+                      <img src="/images/likefill.svg" alt="Лайк" className="w-5 h-5 md:w-6 md:h-6" />
+                    ) : (
+                      <img src="/images/like.svg" alt="Лайк" className="w-5 h-5 md:w-6 md:h-6" />
+                    )}
+                  </span>
+                  <span className="font-medium text-sm md:text-base">{post.likes}</span>
                 </button>
                 
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer">
-                  <img src="/images/comments.svg" alt="" className="aspect-square w-6" />
-                  <span className="font-medium">{post.commentsCount}</span>
+                <button className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer">
+                  <img src="/images/comments.svg" alt="Комментарии" className="w-5 h-5 md:w-6 md:h-6" />
+                  <span className="font-medium text-sm md:text-base">{post.commentsCount}</span>
                 </button>
                 
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer" onClick={() => handleCopyLink()}>
-                  <img src="/images/link.svg" alt="" className="aspect-square w-6" />
-                  <span className="font-medium">Копировать ссылку</span>
+                <button 
+                  className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer" 
+                  onClick={handleCopyLink}
+                >
+                  <img src="/images/link.svg" alt="Поделиться" className="w-5 h-5 md:w-6 md:h-6" />
+                  <span className="hidden md:inline font-medium">Копировать ссылку</span>
+                  <span className="md:hidden font-medium text-sm">Ссылка</span>
                 </button>
               </div>
+              
+              {showCopied && (
+                <div className="absolute right-4 bottom-16 bg-gray-800 text-white text-xs px-2 py-1 rounded animate-fadeIn">
+                  Скопировано!
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="w-full mt-8 mb-8">
-          <div className="w-full h-4 bg-[#FFA100]"></div>
-          <div className="w-full h-4 bg-[#FF7C00]"></div>
-          <div className="w-full h-4 bg-[#FF4500]"></div>
+        {/* Разделитель */}
+        <div className="mt-6 mb-6 md:mb-8">
+          <div className="h-1 bg-[#FFA100]"></div>
+          <div className="h-1 bg-[#FF7C00]"></div>
+          <div className="h-1 bg-[#FF4500]"></div>
         </div>
 
         {/* Форма добавления комментария */}
-        <div className="bg-white w-4xl rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Добавить комментарий</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 md:p-6 mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Добавить комментарий</h2>
           <form onSubmit={handleAddComment}>
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Напишите ваш комментарий..."
-              rows={4}
-              className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none mb-4"
+              rows={3}
+              className="w-full px-3 py-2 md:px-4 md:py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none mb-3 md:mb-4 text-sm md:text-base"
               required
             />
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={isCommenting || !commentText.trim()}
-                className="bg-[#FF7340] hover:bg-[#FF4500] text-white font-semibold py-2 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#FF7340] hover:bg-[#FF4500] text-white font-semibold py-2 px-4 md:py-2 md:px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base cursor-pointer"
               >
                 {isCommenting ? 'Отправка...' : 'Отправить'}
               </button>
             </div>
           </form>
 
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 mt-6">
             Комментарии ({post.commentsCount})
           </h2>
           
           {post.comments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Пока нет комментариев. Будьте первым!</p>
+            <div className="text-center py-6 md:py-8">
+              <p className="text-gray-500 text-sm md:text-base">Пока нет комментариев. Будьте первым!</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {post.comments.map((comment: Comment) => (
-                <div key={comment.id} className="border-b border-gray-100 pb-6 last:border-0 flex items-center w-full justify-between">
-                  <div className="flex items-start gap-3 mb-3 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
-                      {comment.author.firstName[0]}{comment.author.lastName[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center gap-3">
-                        <h4 className="font-bold text-gray-900 truncate">
-                          {comment.author.firstName} {comment.author.lastName}
-                        </h4>
-                        <span className="text-sm text-gray-500 whitespace-nowrap">
-                          {formatDate(comment.createdAt)}
-                        </span>
+                <div key={comment.id} className="border-b border-gray-100 pb-4 md:pb-6 last:border-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold text-xs md:text-sm shrink-0">
+                        {comment.author.firstName[0]}{comment.author.lastName[0]}
                       </div>
-                      <div className="pr-4 mt-2">
-                        <p className="text-gray-700 wrap-break-words whitespace-pre-wrap">
-                          {comment.content}
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1 mb-1">
+                          <h4 className="font-bold text-gray-900 text-sm md:text-base truncate">
+                            {comment.author.firstName} {comment.author.lastName}
+                          </h4>
+                          <span className="text-xs md:text-sm text-gray-500">
+                            {formatDate(comment.createdAt)}
+                          </span>
+                        </div>
+                        <div className="mt-1">
+                          <p className="text-gray-700 text-sm md:text-base wrap-break-word whitespace-pre-wrap">
+                            {comment.content}
+                          </p>
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Кнопки действий для комментариев */}
+                    {user?.id === comment.author.id && (
+                      <div className="relative shrink-0">
+                        <button
+                          onClick={() => setShowCommentActions(
+                            showCommentActions === comment.id ? null : comment.id
+                          )}
+                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                        </button>
+                        
+                        {showCommentActions === comment.id && (
+                          <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-35 z-10">
+                            <button
+                              onClick={() => openEditModal(comment)}
+                              className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 w-full text-sm cursor-pointer"
+                            >
+                              <img 
+                                src="/images/edit.png" 
+                                alt="Редактировать" 
+                                className="w-4 h-4" 
+                              />
+                              Редактировать
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComment(user.id, comment.author.id, comment.id)}
+                              className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 w-full text-sm cursor-pointer"
+                            >
+                              <img 
+                                src="/images/delete.svg" 
+                                alt="Удалить" 
+                                className="w-4 h-4" 
+                              />
+                              Удалить
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  
-                  {user?.id === comment.author.id && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button 
-                        onClick={() => openEditModal(comment)}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                        title="Редактировать"
-                      >
-                        <img 
-                          src="/images/edit.png" 
-                          alt="Редактировать" 
-                          className="aspect-square w-5 hover:opacity-80 duration-200 cursor-pointer" 
-                        />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteComment(user.id, comment.author.id, comment.id)}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                        title="Удалить"
-                      >
-                        <img 
-                          src="/images/delete.svg" 
-                          alt="Удалить" 
-                          className="aspect-square w-5 hover:opacity-80 duration-200 cursor-pointer" 
-                        />
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -561,27 +662,28 @@ export default function PostPage() {
         </div>
       </div>
 
+      {/* Модальное окно удаления поста */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 animate-fadeIn">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Удалить пост</h2>
-                <p className="text-gray-600 text-sm">Это действие нельзя отменить</p>
+                <h2 className="text-lg md:text-xl font-bold text-gray-900">Удалить пост</h2>
+                <p className="text-gray-600 text-xs md:text-sm">Это действие нельзя отменить</p>
               </div>
             </div>
             
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-700 mb-4 md:mb-6 text-sm md:text-base">
               Вы уверены, что хотите удалить пост «{post?.title}»? Все комментарии к нему также будут удалены.
             </p>
             
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-2 md:gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium cursor-pointer"
+                className="px-3 py-2 md:px-4 md:py-2 text-gray-600 hover:text-gray-800 font-medium cursor-pointer text-sm md:text-base"
                 disabled={isDeleting}
               >
                 Отмена
@@ -589,7 +691,7 @@ export default function PostPage() {
               <button
                 onClick={handleDeletePost}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 md:py-2 md:px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm md:text-base cursor-pointer"
               >
                 {isDeleting ? (
                   <>

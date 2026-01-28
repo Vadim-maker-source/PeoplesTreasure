@@ -175,7 +175,7 @@ export default function Forum() {
             </div>
 
             {/* Сортировка */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-gray-700 font-medium">Сортировка:</span>
                 <div className="flex bg-[#FFF0F0] rounded-full p-1">
