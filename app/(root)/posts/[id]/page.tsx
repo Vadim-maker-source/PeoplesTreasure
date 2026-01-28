@@ -451,20 +451,14 @@ export default function PostPage() {
 
             {/* Слайдер изображений */}
             {post.images.length > 0 && (
-              <div className="mb-4 md:mb-6">
+              <div className="mb-8">
                 <Swiper
                   modules={[Navigation, Pagination, Autoplay]}
-                  navigation={{
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
-                  }}
-                  pagination={{ 
-                    clickable: true,
-                    dynamicBullets: true,
-                  }}
+                  navigation
+                  pagination={{ clickable: true }}
                   autoplay={{ delay: 5000, disableOnInteraction: false }}
                   loop={post.images.length > 1}
-                  className="h-48 md:h-64 lg:h-80 rounded-lg md:rounded-xl overflow-hidden"
+                  className="h-125 rounded-xl overflow-hidden"
                 >
                   {post.images.map((image: string, index: number) => (
                     <SwiperSlide key={index}>
@@ -474,9 +468,9 @@ export default function PostPage() {
                           alt={`Изображение ${index + 1} к посту "${post.title}"`}
                           className="h-full w-full object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-2 md:p-3">
-                          <div className="text-white text-xs md:text-sm">
-                            <p className="opacity-90">
+                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
+                          <div className="text-white">
+                            <p className="text-sm opacity-90">
                               Изображение {index + 1} из {post.images.length}
                             </p>
                           </div>
@@ -485,8 +479,6 @@ export default function PostPage() {
                     </SwiperSlide>
                   ))}
                 </Swiper>
-                <div className="swiper-button-prev text-white w-8 h-8 !md:w-10 !md:h-10 after:text-sm md:after:text-base"></div>
-                <div className="swiper-button-next text-white w-8 h-8 !md:w-10 !md:h-10 after:text-sm md:after:text-base"></div>
               </div>
             )}
 
