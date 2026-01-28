@@ -52,12 +52,12 @@ const Turki = () => {
         <div className="w-full h-4 bg-[#FF4500]"></div>
       </div>
 
-<div className="w-full px-15 py-10">
+<div className="w-full md:px-15 px-5 py-10">
       <img src="/images/turkiMain.png" alt="" className='w-full rounded-xl' />
 </div>
 
-      <div className="flex flex-col px-15 gap-10 pb-15">
-        <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] break-all rounded-lg">
+      <div className="flex flex-col md:px-15 px-5 gap-10 pb-15">
+        <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full break-all rounded-lg">
             <p className="text-lg">Тюркские народы России — это наследники кочевых империй и оседлых государств, рассеянные от предгорий Кавказа до арктической Якутии. Их объединяет общее языковое происхождение, но разделяют история, хозяйственный уклад и культура, вобравшая влияния соседних цивилизаций.</p>
         </div>
 
@@ -67,12 +67,12 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Численность</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Крупнейшие: татары (~5 млн), башкиры (~1.5 млн), чуваши (~1.4 млн), казахи (~1 млн в приграничных областях). Средние: якуты (~500 тыс.), кумыки (~600 тыс.), тувинцы (~300 тыс.). Малые: карачаевцы, балкарцы, алтайцы, шорцы, долганы, тофалары.</p>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
-                <img src="/images/tch.png" alt="" className="w-[80%]" />
+            <div className="bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                <img src="/images/tch.png" alt="" className="" />
             </div>
         </div>
 
@@ -82,7 +82,7 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Языковая семья</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Тюркская ветвь алтайской языковой семьи. Языки внутри ветви часто взаимопонятны (особенно у соседей), но якутский, чувашский и горско-кавказские тюркские языки сильно обособлены.</p>
             </div>
         </div>
@@ -93,13 +93,13 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Регион проживания</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Крупные анклавы в Поволжье и Приуралье (татары, башкиры, чуваши), на Северном Кавказе (кумыки, карачаевцы, балкарцы, ногайцы), в Южной Сибири (тувинцы, хакасы, алтайцы, шорцы), в Якутии и на Крайнем Севере (якуты, долганы). Исторически — от степи до тайги и тундры.
                 </p>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
-                <img src="/images/turkiReg.png" alt="" className="w-[80%]" />
+            <div className="bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                <img src="/images/turkiReg.png" alt="" className="" />
             </div>
         </div>
 
@@ -109,7 +109,7 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Традиции</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Основаны на сочетании кочевых и оседлых ценностей. Культ коня и воинской доблести у степняков, почитание природы и духов местности — у таежников и горцев. Сильны традиции коллективного труда (помочи), гостеприимства и почтения к старшим (аксакалам). Значима общинная солидарность.</p>
             </div>
         </div>
@@ -120,11 +120,11 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Еда</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Доминирует мясо-молочная направленность. Ключевые элементы: мясо (конина, баранина, у якутов — оленина и конина), кисломолочные продукты (кумыс, айран, катык), тесто (лепешки, лапша, пельмени). Национальные блюда: татарский элеш и чак-чак, башкирский бишбармак, якутские строганина и лепешки-караси, тувинская кровяная колбаса.</p>
             </div>
 
-            <div className="relative w-[60%] overflow-hidden rounded-lg">
+            <div className="relative md:w-[60%] w-full overflow-hidden rounded-lg">
             <div className="relative aspect-video bg-gray-100">
               {foodImages.map((image, index) => (
                 <div
@@ -188,11 +188,11 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Костюм</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Единства нет, уклад определяет форму. У степняков-кочевников — удобная для верховой еды распашная одежда, меховые шапки и халаты. У оседлых народов (татары, чуваши) — рубахи, камзолы, богатая вышивка. У якутов — меховая одежда для экстремального холода. Женский костюм всегда включал много украшений (нагрудные, височные), головные уборы (калфак у татар, башкир) указывали на возраст и статус.</p>
             </div>
 
-            <div className="relative w-[60%] overflow-hidden rounded-lg">
+            <div className="relative md:w-[60%] w-full overflow-hidden rounded-lg">
             <div className="relative aspect-video bg-gray-100">
               {suiteImages.map((image, index) => (
                 <div
@@ -257,13 +257,13 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Фольклор</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Героический эпос — сердце культуры: якутский Олонхо, алтайский Маадай-Кара, башкирский Урал-батыр. Также развиты лирические песни, сказки, пословицы. Горловое пение (хоомей) у тувинцев, алтайцев, якутов — уникальное явление, имитирующее звуки природы. Музыкальные инструменты: домбра, курай (башкирский духовой), хомус (варган).
                 </p>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
-                <img src="/images/tFolklor.png" alt="" className="w-[80%]" />
+            <div className="bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                <img src="/images/tFolklor.png" alt="" className="" />
             </div>
         </div>
 
@@ -273,7 +273,7 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Язык</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Все относятся к тюркской группе, но сильно различаются. Чувашский — единственный живой представитель булгарской подгруппы. Якутский — самый северный тюркский язык с большой долей монгольской и палеоазиатской лексики. Письменность: исторически руны (орхоно-енисейская), затем арабская графика, с 1930-х — кириллица.
                 </p>
             </div>
@@ -285,12 +285,12 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Происхождение</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Восходят к единой тюркской общности, сформировавшейся в степях Центральной Азии. Расселение по Евразии волнами миграций (гунны, булгары, кипчаки) и создание государств (Волжская Булгария, Золотая Орда, Сибирское ханство). Местные субстраты (финно-угорский, палеоазиатский, кавказский) создали уникальный облик каждого народа.</p>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
-                <img src="/images/tProish.png" alt="" className="w-[80%]" />
+            <div className="bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                <img src="/images/tProish.png" alt="" className="" />
             </div>
         </div>
 
@@ -300,13 +300,13 @@ const Turki = () => {
                 <h1 className="text-3xl text-black font-semibold">Исторические события</h1>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+            <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                 <p className="text-lg">Ключевые вехи: принятие ислама волжскими булгарами (X в.) и Золотой Ордой, определившее культуру татар, башкир, кавказских тюрков; присоединение к России (XVI-XVIII вв.); христианизация чувашей и части татар; Якутское казачество и освоение Сибири; депортация карачаевцев и балкарцев (1943-44); рост национального самосознания в конце XX века.
                 </p>
             </div>
 
-            <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
-                <img src="/images/tHist.png" alt="" className="w-[80%]" />
+            <div className="bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                <img src="/images/tHist.png" alt="" className="" />
             </div>
         </div>
 

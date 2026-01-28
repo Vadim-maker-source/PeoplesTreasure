@@ -121,7 +121,7 @@ const PeoplePage = () => {
         }
 
         return (
-            <div className="relative w-[60%] overflow-hidden rounded-lg">
+            <div className="relative md:w-[60%] w-full overflow-hidden rounded-lg">
                 <div className="relative aspect-video bg-gray-100">
                     {images.map((src, index) => (
                         <div
@@ -236,7 +236,7 @@ const PeoplePage = () => {
                 <div className="w-full h-4 bg-[#FF4500]"></div>
             </div>
 
-            <div className="w-full px-15 py-10">
+            <div className="w-full md:px-15 px-5 py-10">
                 {people.photos && people.photos.length > 0 ? (
                     renderSlider(people.photos, currentPhotoSlide, nextPhotoSlide, prevPhotoSlide, goToPhotoSlide)
                 ) : (
@@ -246,8 +246,8 @@ const PeoplePage = () => {
                 )}
             </div>
 
-            <div className="flex flex-col px-15 gap-10 pb-15">
-                <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] break-all rounded-lg">
+            <div className="flex flex-col md:px-15 px-5 gap-10 pb-15">
+                <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full break-all rounded-lg">
                     <p className="text-lg">{people.description}</p>
                 </div>
 
@@ -257,7 +257,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Численность</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         <p className="text-lg">{formatPopulation(people.population)} человек</p>
                     </div>
                 </div>
@@ -268,7 +268,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Языковая семья</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         <p className="text-lg">{people.languageFamily}</p>
                     </div>
                 </div>
@@ -279,7 +279,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Регион проживания</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         <p className="text-lg">{people.region}</p>
                     </div>
                 </div>
@@ -290,7 +290,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Традиции</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.traditions && people.traditions.length > 0 ? (
                             <>
                                 {renderList(people.traditions)}
@@ -307,7 +307,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Еда</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.food && people.food.length > 0 ? (
                             renderList(people.food)
                         ) : (
@@ -326,7 +326,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Костюм</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.suit && people.suit.length > 0 ? (
                             renderList(people.suit)
                         ) : (
@@ -345,7 +345,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Фольклор</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.folklor && people.folklor.length > 0 ? (
                             renderList(people.folklor)
                         ) : (
@@ -361,7 +361,7 @@ const PeoplePage = () => {
                             <h1 className="text-3xl text-black font-semibold">Язык</h1>
                         </div>
 
-                        <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                        <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                             <p className="text-lg">{people.language}</p>
                         </div>
                     </div>
@@ -373,7 +373,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Происхождение</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         <p className="text-lg">{people.prois}</p>
                     </div>
                 </div>
@@ -384,7 +384,7 @@ const PeoplePage = () => {
                         <h1 className="text-3xl text-black font-semibold">Исторические события</h1>
                     </div>
 
-                    <div className="px-3 py-2 bg-[#FFF0F0] w-[60%] rounded-lg">
+                    <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.historyEvents && people.historyEvents.length > 0 ? (
                             renderList(people.historyEvents)
                         ) : (
