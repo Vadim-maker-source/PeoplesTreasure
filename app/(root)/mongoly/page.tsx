@@ -267,7 +267,7 @@ const Mongoly = () => {
 
         <div className="flex flex-col gap-10">
             <div className="flex items-center gap-2">
-                <img src="/images/guitar.png" alt="" className="w-8" />
+                <img src="/images/language.png" alt="" className="w-8" />
                 <h1 className="text-3xl text-black font-semibold">Язык</h1>
             </div>
 
