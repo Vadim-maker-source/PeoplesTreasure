@@ -9,10 +9,10 @@ const Support = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        fromName: user?.firstName + " " + user?.lastName,
+        fromName: '',
         subject: '',
         message: '',
-        userEmail: user?.email,
+        userEmail: '',
     });
 
 useEffect(() => {
@@ -20,6 +20,11 @@ useEffect(() => {
         const currentUser = await getCurrentUser();
         if(currentUser){
             setUser(currentUser);
+            setFormData(prev => ({
+              ...prev,
+              fromName: `${currentUser.firstName} ${currentUser.lastName}`,
+              userEmail: currentUser.email || '',
+          }));
         }
     };
 
@@ -50,10 +55,10 @@ useEffect(() => {
       if (result.success) {
         toast.success(result.message);
         setFormData({
-            fromName: user?.firstName + " " + user?.lastName,
-            subject: '',
-            message: '',
-            userEmail: user?.email,
+          fromName: `${user?.firstName || ''} ${user?.lastName || ''}`,
+          subject: '',
+          message: '',
+          userEmail: user?.email || '',
         });
       } else {
         toast.error(result.error);
@@ -92,14 +97,14 @@ useEffect(() => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="fromName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Ваше имя и фамилия *
                   </label>
                   <input
                     type="text"
-                    id="fromName"
                     name="fromName"
-                    value={user?.firstName + " " + user?.lastName}
+                    value={formData.fromName}
+                    onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200"
                     placeholder="Иван Иванов"
@@ -107,14 +112,14 @@ useEffect(() => {
                 </div>
 
                 <div>
-                  <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Ваш email *
                   </label>
                   <input
                     type="email"
-                    id="userEmail"
                     name="userEmail"
-                    value={user?.email}
+                    value={formData.userEmail}
+                    onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200"
                     placeholder="ivan@example.com"
                   />

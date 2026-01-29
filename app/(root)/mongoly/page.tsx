@@ -8,7 +8,7 @@ const Mongoly = () => {
   
   const foodImages = [
     { src: '/images/mongFood1.jpg', alt: 'Буузы' },
-    { src: '/images/mongFood2.jpg', alt: 'сүүтэй цай' },
+    { src: '/images/mongFood2.jfif', alt: 'сүүтэй цай' },
     { src: '/images/mongFood3.jfif', alt: 'Калмыцкий чай' },
   ];
 
