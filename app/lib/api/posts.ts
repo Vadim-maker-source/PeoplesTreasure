@@ -14,6 +14,7 @@ export type PostWithAuthor = {
   likes: number;
   likedByUser?: boolean;
   author: {
+    id?: string
     firstName: string;
     lastName: string;
     email: string;
@@ -50,6 +51,7 @@ export async function getAllPosts(
       include: {
         author: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             email: true,
@@ -196,6 +198,7 @@ export async function getAllPosts(
         include: {
           author: {
             select: {
+              id: true,
               firstName: true,
               lastName: true,
               email: true,

@@ -104,7 +104,7 @@ export default function Forum() {
       }
     } catch (error) {
       toast.error(error as string)
-      console.error('Error toggling like:', error);
+      console.error(error);
     }
   };
 
@@ -226,13 +226,17 @@ export default function Forum() {
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
+                    <Link href={`/profile/${post.author.id}`}>
                     <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
                       {post.author.firstName[0]}{post.author.lastName[0]}
                     </div>
+                    </Link>
                     <div>
+                      <Link href={`/profile/${post.author.id}`}>
                       <h3 className="font-bold text-gray-900">
                         {post.author.firstName} {post.author.lastName}
                       </h3>
+                      </Link>
                       <p className="text-sm text-gray-500">
                         {formatDate(post.createdAt)}
                       </p>
