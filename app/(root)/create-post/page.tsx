@@ -166,7 +166,7 @@ export default function CreatePostPage() {
                   <option value="">Не выбрано</option>
                   {ethnicGroups.map(group => (
                     <option key={group.id} value={group.id}>
-                      {group.name} ({group.region})
+                      {group.name}
                     </option>
                   ))}
                 </select>
