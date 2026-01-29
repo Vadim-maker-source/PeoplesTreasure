@@ -412,7 +412,7 @@ export default function Forum() {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-4 py-2 rounded-lg ${currentPage === pageNum ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    className={`px-4 py-2 rounded-lg ${currentPage === pageNum ? 'bg-[#FF7340] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                   >
                     {pageNum}
                   </button>
