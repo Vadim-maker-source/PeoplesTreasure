@@ -44,31 +44,13 @@ export async function getAllPosts(
     const user = await getCurrentUser();
     const skip = (page - 1) * limit;
     
-    // Базовый запрос с сортировкой по дате
     let posts;
     if (sortBy === 'popular') {
-      // Для популярных постов сначала получим ID постов с сортировкой по лайкам
-      const popularPostIds = await prisma.post.findMany({
+      // Для популярных постов используем сырой SQL запрос или другой подход
+      // Сначала получим все посты с лайками
+      posts = await prisma.post.findMany({
         skip,
         take: limit,
-        select: { id: true },
-        orderBy: [
-          {
-            likes: {
-              _count: 'desc' as const,
-            },
-          },
-          {
-            createdAt: 'desc' as const,
-          },
-        ],
-      });
-
-      const postIds = popularPostIds.map(p => p.id);
-      
-      // Затем получим полные данные по этим ID
-      posts = await prisma.post.findMany({
-        where: { id: { in: postIds } },
         include: {
           author: { 
             select: { 
@@ -93,18 +75,30 @@ export async function getAllPosts(
         },
       });
       
-      // Сохраняем порядок из первого запроса
-      posts.sort((a, b) => {
-        const indexA = postIds.indexOf(a.id);
-        const indexB = postIds.indexOf(b.id);
-        return indexA - indexB;
-      });
+      // Затем отсортируем на клиенте по количеству лайков
+      // Получим количество лайков для каждого поста
+      const postsWithLikesCount = await Promise.all(posts.map(async (post) => {
+        const likesCount = await prisma.like.count({
+          where: { postId: post.id }
+        });
+
+        return {
+          post,
+          likesCount
+        };
+      }));
+
+      // Сортируем по убыванию лайков
+      postsWithLikesCount.sort((a, b) => b.likesCount - a.likesCount);
+      
+      // Извлекаем только посты
+      posts = postsWithLikesCount.map(item => item.post);
     } else {
       // Для сортировки по дате
       posts = await prisma.post.findMany({
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' as const },
+        orderBy: { createdAt: 'desc' },
         include: {
           author: { 
             select: { 
@@ -155,6 +149,11 @@ export async function getAllPosts(
       };
     }));
 
+    // Если сортировка по популярности, дополнительно сортируем результат
+    if (sortBy === 'popular') {
+      postsWithLikes.sort((a, b) => b.likes - a.likes);
+    }
+
     return {
       posts: postsWithLikes,
       pagination: {
@@ -198,7 +197,7 @@ export async function getPostById(id: string) {
             },
           },
         },
-        orderBy: { createdAt: 'desc' as const },
+        orderBy: { createdAt: 'desc' },
       },
       likes: user
         ? {
@@ -241,32 +240,9 @@ export async function getPostsByEthnicGroup(
     
     let posts;
     if (sortBy === 'popular') {
-      // Для популярных постов сначала получим ID постов с сортировкой по лайкам
-      const popularPostIds = await prisma.post.findMany({
-        where: { ethnicGroupId },
-        skip,
-        take: limit,
-        select: { id: true },
-        orderBy: [
-          {
-            likes: {
-              _count: 'desc' as const,
-            },
-          },
-          {
-            createdAt: 'desc' as const,
-          },
-        ],
-      });
-
-      const postIds = popularPostIds.map(p => p.id);
-      
-      // Затем получим полные данные по этим ID
+      // Для популярных постов сначала получим все посты
       posts = await prisma.post.findMany({
-        where: { 
-          id: { in: postIds },
-          ethnicGroupId 
-        },
+        where: { ethnicGroupId },
         include: {
           author: {
             select: {
@@ -291,19 +267,31 @@ export async function getPostsByEthnicGroup(
         },
       });
       
-      // Сохраняем порядок из первого запроса
-      posts.sort((a, b) => {
-        const indexA = postIds.indexOf(a.id);
-        const indexB = postIds.indexOf(b.id);
-        return indexA - indexB;
-      });
+      // Получим количество лайков для каждого поста
+      const postsWithLikesCount = await Promise.all(posts.map(async (post) => {
+        const likesCount = await prisma.like.count({
+          where: { postId: post.id }
+        });
+
+        return {
+          post,
+          likesCount
+        };
+      }));
+
+      // Сортируем по убыванию лайков и применяем пагинацию
+      postsWithLikesCount.sort((a, b) => b.likesCount - a.likesCount);
+      const paginatedPosts = postsWithLikesCount.slice(skip, skip + limit);
+      
+      // Извлекаем только посты
+      posts = paginatedPosts.map(item => item.post);
     } else {
       // Для сортировки по дате
       posts = await prisma.post.findMany({
         where: { ethnicGroupId },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' as const },
+        orderBy: { createdAt: 'desc' },
         include: {
           author: {
             select: {
@@ -357,6 +345,11 @@ export async function getPostsByEthnicGroup(
       };
     }));
 
+    // Если сортировка по популярности, дополнительно сортируем результат
+    if (sortBy === 'popular') {
+      postsWithLikes.sort((a, b) => b.likes - a.likes);
+    }
+
     return {
       posts: postsWithLikes,
       pagination: {
@@ -375,27 +368,8 @@ export async function getPostsByEthnicGroup(
 
 export async function getPopularPosts(limit: number = 10) {
   try {
-    // Сначала получаем ID популярных постов
-    const popularPostIds = await prisma.post.findMany({
-      take: limit,
-      select: { id: true },
-      orderBy: [
-        {
-          likes: {
-            _count: 'desc' as const,
-          },
-        },
-        {
-          createdAt: 'desc' as const,
-        },
-      ],
-    });
-
-    const postIds = popularPostIds.map(p => p.id);
-    
-    // Затем получаем полные данные
+    // Получаем все посты
     const posts = await prisma.post.findMany({
-      where: { id: { in: postIds } },
       include: {
         author: {
           select: {
@@ -412,13 +386,6 @@ export async function getPopularPosts(limit: number = 10) {
         },
       },
     });
-    
-    // Сохраняем порядок
-    posts.sort((a, b) => {
-      const indexA = postIds.indexOf(a.id);
-      const indexB = postIds.indexOf(b.id);
-      return indexA - indexB;
-    });
 
     // Получаем количество лайков для каждого поста
     const postsWithLikes = await Promise.all(posts.map(async (post) => {
@@ -426,6 +393,20 @@ export async function getPopularPosts(limit: number = 10) {
         where: { postId: post.id }
       });
 
+      return {
+        post,
+        likesCount
+      };
+    }));
+
+    // Сортируем по убыванию лайков и берем первые N
+    postsWithLikes.sort((a, b) => b.likesCount - a.likesCount);
+    const topPosts = postsWithLikes.slice(0, limit);
+
+    // Формируем результат
+    const result = await Promise.all(topPosts.map(async (item) => {
+      const { post, likesCount } = item;
+      
       return {
         id: post.id,
         title: post.title,
@@ -441,7 +422,7 @@ export async function getPopularPosts(limit: number = 10) {
       };
     }));
 
-    return postsWithLikes;
+    return result;
   } catch (error) {
     console.error(error);
     throw new Error('Не удалось загрузить популярные посты');
