@@ -88,7 +88,7 @@ const Topbar = () => {
           shadow-md
         `}
       >
-        <img src="/images/logo.png" alt="Логотип" className="aspect-square w-12" />
+        <img src="/images/logo2.png" alt="Логотип" className="h-9 w-76" />
         
         <div className="hidden md:flex items-center justify-between gap-8">
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/">Главная</Link></p>
@@ -96,6 +96,7 @@ const Topbar = () => {
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/#map">Карта России</Link></p>
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/support">Написать нам</Link></p>
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/forum">Форум</Link></p>
+          <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/event">События</Link></p>
         </div>
 
         <div className="md:hidden">
@@ -104,7 +105,7 @@ const Topbar = () => {
             className="p-2 text-[#FF7340] hover:bg-[#FFF0F0]/80 rounded-full transition-colors"
             aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMenuOpen ? <X size={28} className='cursor-pointer hover:opacity-80 duration-150' /> : <Menu size={28} className='cursor-pointer hover:opacity-80 duration-150' />}
           </button>
         </div>
 
@@ -112,7 +113,7 @@ const Topbar = () => {
           {user ? (
             <div className="flex items-center gap-5">
               <Link href={`/profile/${user.id}`}>
-                <button className="px-6 py-2 lg:w-36 bg-[#FFB840] hover:bg-[#ffb940]/40 border border-[#FF7340] rounded-full cursor-pointer duration-200 flex items-center">
+                <button className="px-6 py-2 lg:max-w-64 bg-[#FFB840] hover:bg-[#ffb940]/40 border border-[#FF7340] rounded-full cursor-pointer duration-200 flex items-center font-unbounded">
                   <img src="/images/user.svg" alt="" className="w-6 aspect-square" />&nbsp;&nbsp;|&nbsp;&nbsp;{user.firstName}
                 </button>
               </Link>
@@ -179,6 +180,12 @@ const Topbar = () => {
           <Link href="/forum" onClick={handleLinkClick}>
             <div className="py-3 px-4 hover:bg-[#FFB840]/20 rounded-lg transition-colors cursor-pointer">
               Форум
+            </div>
+          </Link>
+
+          <Link href="/event" onClick={handleLinkClick}>
+            <div className="py-3 px-4 hover:bg-[#FFB840]/20 rounded-lg transition-colors cursor-pointer">
+              События
             </div>
           </Link>
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Народы России</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: auto;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #e6f7ff;
+        }
+        .region-label {
+            position: absolute;
+            padding: 4px 8px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border: 1px solid #4a90e2;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #2c3e50;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #4a90e2;
+        }
+        .legend h3 {
+            margin-top: 0;
+        }
+        .legend ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .legend li {
+            padding: 5px 0;
+        }
+        .footnote {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Народы России</h1>
+        <div class="map-container">
+            <!-- SVG карта России -->
+            <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Упрощённый контур России -->
+                <path d="M150,100 L300,50 L450,80 L600,40 L750,70 L850,120 L900,200 L880,300 L800,400 L700,500 L600,550 L500,520 L400,500 L300,450 L200,400 L150,350 L120,250 L130,150 Z" 
+                      fill="#cce5ff" stroke="#4a90e2" stroke-width="2"/>
+            </svg>
+            
+            <!-- Метки народов -->
+            <div class="region-label" style="top: 25%; left: 20%;">Русские</div>
+            <div class="region-label" style="top: 35%; left: 65%;">Татары</div>
+            <div class="region-label" style="top: 40%; left: 60%;">Башкиры</div>
+            <div class="region-label" style="top: 20%; left: 40%;">Коми</div>
+            <div class="region-label" style="top: 15%; left: 70%;">Ненцы</div>
+            <div class="region-label" style="top: 45%; left: 65%;">Ханты</div>
+            <div class="region-label" style="top: 50%; left: 68%;">Манси</div>
+        </div>
+        
+        <div class="legend">
+            <h3>Указанные народы:</h3>
+            <ul>
+                <li><strong>Ненцы</strong> — север европейской части и Западной Сибири</li>
+                <li><strong>Коми</strong> — северо-восток европейской части</li>
+                <li><strong>Ханты</strong> — Западная Сибирь (Ханты-Мансийский АО)</li>
+                <li><strong>Русские</strong> — повсеместно, преимущественно в западной части</li>
+                <li><strong>Манси</strong> — Западная Сибирь (Ханты-Мансийский АО)</li>
+                <li><strong>Татары</strong> — Поволжье и Урал (Татарстан)</li>
+                <li><strong>Башкиры</strong> — Южный Урал (Башкортостан)</li>
+            </ul>
+        </div>
+        
+        <div class="footnote">
+            Карта схематична. Расположение меток приблизительное, отражает основные регионы проживания народов.
+        </div>
+    </div>
+</body>
+</html>

@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { peoples } from '@/app/lib/peoples';
-import { createComment, deleteComment, deletePost, getPostById, toggleLike, updateComment } from '@/app/lib/api/posts';
-import { AlertTriangle, ChevronLeft, Loader2, MoreVertical, Trash2, X } from 'lucide-react';
+import { createComment, deleteComment, deletePost, getPostById, toggleLike, updateComment, updatePost } from '@/app/lib/api/posts';
+import { AlertTriangle, ChevronLeft, Edit, Loader2, MoreVertical, Save, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCurrentUser, User } from '@/app/lib/api/user';
 
@@ -40,8 +40,23 @@ export default function PostPage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showCommentActions, setShowCommentActions] = useState<string | null>(null);
   const [showPostActions, setShowPostActions] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const [newImages, setNewImages] = useState<File[]>([])
+  const [updateForm, setUpdateForm] = useState({
+    title: '',
+    content: '',
+    tags: '',
+    ethnicGroupId: ''
+  })
+
+  const ethnicGroups = peoples.map(people => ({
+    id: people.id,
+    name: people.name,
+    region: people.region.split(',')[0],
+  }));
 
   const handleDeletePost = async () => {
     if (!post || isDeleting) return;
@@ -91,6 +106,13 @@ export default function PostPage() {
       try {
         const data = await getPostById(params.id as string);
         setPost(data);
+        setUpdateForm({
+          title: String(data?.title),
+          content: String(data?.content),
+          tags: String(data?.tags.join(', ')),
+          ethnicGroupId: String(data?.ethnicGroupId),
+        })
+        setExistingImages(data?.images ?? [])
       } catch (error) {
         console.error('Error loading post:', error);
       } finally {
@@ -153,6 +175,76 @@ export default function PostPage() {
       setIsEditing(false);
     }
   };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index))
+  }
+  
+  const removeNewImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+  
+    const files = Array.from(e.target.files)
+  
+    if (newImages.length + files.length > 10) {
+      toast.error('Максимум 10 изображений')
+      return
+    }
+  
+    setNewImages(prev => [...prev, ...files])
+  }
+
+  const handleEditPost = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isEditing) return
+  
+    setIsEditing(true)
+  
+    try {
+      const result = await updatePost(post.id, {
+        title: updateForm.title,
+        content: updateForm.content,
+        tags: updateForm.tags.split(',').map(t => t.trim()),
+        ethnicGroupId: updateForm.ethnicGroupId || null,
+        existingImages,
+        newImages
+      })
+  
+      if (result.success) {
+        toast.success('Пост обновлён')
+        setShowEditModal(false)
+        setPost((prev: any) => {
+          if (!prev) return prev;
+        
+          return {
+            ...result.post,
+            author: prev.author,
+            comment: prev.comment,
+            commentsCount: prev.commentsCount
+          };
+        });
+        location.reload()
+      } else {
+        toast.error(result.error || 'Ошибка обновления')
+      }
+    } catch (e) {
+      toast.error('Ошибка при обновлении поста')
+    } finally {
+      setIsEditing(false)
+    }
+  }
+  
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target
+        setUpdateForm(prev => ({
+          ...prev,
+          [name]: value
+        }))
+      }
 
   const handleToggleLike = async () => {
     if (!post || isLiking) return;
@@ -420,6 +512,16 @@ export default function PostPage() {
                     
                     {showPostActions && (
                       <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-30 z-10">
+                        <button
+                          onClick={() => {
+                            setShowEditModal(true);
+                            setShowPostActions(false);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-red-50 w-full text-sm cursor-pointer"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Изменить
+                        </button>
                         <button
                           onClick={() => {
                             setShowDeleteModal(true);
@@ -700,6 +802,157 @@ export default function PostPage() {
             </div>
           </div>
         </div>
+      )}
+
+{showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">Редактировать профиль</h2>
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          
+          <form onSubmit={handleEditPost} className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Заголовок *
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={updateForm.title}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Контент *
+                </label>
+                <input
+                  type="text"
+                  name="content"
+                  value={updateForm.content}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Теги *
+                </label>
+                <input
+                  type="tel"
+                  name="tags"
+                  value={updateForm.tags}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Этническая группа
+                </label>
+                <select
+                  name="ethnicGroupId"
+                  value={updateForm.ethnicGroupId}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:border-[#FF7340] focus:ring-2 focus:ring-transparent transition duration-200"
+                >
+                  <option value="">Не выбрано</option>
+                  {ethnicGroups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-semibold text-gray-800 mb-3">
+                  Изображения
+                </label>
+                
+                <div className="mb-4">
+                  <label className="block">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="image-upload"
+                      disabled={isLoading || existingImages.length >= 10}
+                    />
+                    <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200">
+                      <span className="text-3xl mb-2">📷</span>
+                      <span className="text-gray-600 font-medium">
+                        {existingImages.length >= 10 ? 'Достигнут лимит 10 изображений' : 'Нажмите для загрузки изображений'}
+                      </span>
+                      <span className="text-sm text-gray-500 mt-1">
+                        До {10 - existingImages.length} изображений, макс. 5MB каждое
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                
+                {/* Список загруженных изображений */}
+                {existingImages.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img} />
+                    <button type="button" onClick={() => removeExistingImage(i)}>×</button>
+                  </div>
+                ))}
+                {newImages.map((file, i) => (
+                  <div key={i} className="relative">
+                    <img src={URL.createObjectURL(file)} />
+                    <button type="button" onClick={() => removeNewImage(i)}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                disabled={isEditing}
+                className="flex items-center gap-2 px-6 py-2 bg-[#FFB840] hover:from-[#FFB840]/80 text-white font-medium rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isEditing ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Сохранение...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Сохранить
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
       )}
     </div>
   );

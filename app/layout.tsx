@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Unbounded } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const unbounded = Unbounded({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-unbounded',
 });
 
 export const metadata: Metadata = {
@@ -23,9 +24,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased scroll-smooth bg-[#FFF9F9]`}
+        className={`
+          ${unbounded.variable} 
+          ${geistSans.variable} 
+          ${geistSans.className} 
+          antialiased scroll-smooth bg-[#FFF9F9]
+        `}
       >
         {children}
       </body>

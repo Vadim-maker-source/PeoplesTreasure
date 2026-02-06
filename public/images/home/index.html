@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="logo.png" type="image/png">
+    <title>Культурный Код</title>
+    <style>
+        :root {
+            --font-size-normal: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-size: var(--font-size-normal);
+            line-height: 1.5;
+            background-image: url('fon.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: scroll;
+            color: #000000 !important;
+            margin: 3% 10.5% 0 10.5%;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Стили для бургер-меню */
+        .burger-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .burger-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .burger-line {
+            width: 30px;
+            height: 3px;
+            background-color: #000;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .burger-menu.active .burger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .burger-menu.active .burger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger-menu.active .burger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+        }
+
+        .burger-menu-content {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background-color: rgba(255, 255, 255, 0.98);
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            padding: 80px 20px 20px;
+            z-index: 999;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .burger-menu.active .burger-menu-content {
+            right: 0;
+        }
+
+        .burger-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu.active .burger-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            margin-bottom: 15px;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: #000;
+            font-family: "Unbounded", sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-link:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #000;
+            padding-left: 20px;
+        }
+
+        .menu-link.active {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #000;
+        }
+
+        .menu-icon {
+            font-size: 20px; 
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+            color:rgb(255, 161, 0, 1)
+        }
+
+        .logo {
+            width: 60px;
+            height: auto;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-family: "Unbounded", sans-serif;
+            margin: 0 0 20px 0;
+            line-height: 1.1;
+            color: #000000 !important;
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 4vw, 2.5rem);
+            font-family: "DM Sans", sans-serif;
+            margin: 0 0 40px 0;
+            line-height: 1.3;
+            color: #000000 !important;
+        }
+
+        h2 {
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-family: "Unbounded", sans-serif;
+            margin: 0 0 20px 0;
+            line-height: 1.2;
+            color: #000000 !important;
+        }
+
+        p {
+            font-size: clamp(1rem, 3vw, 1.8rem);
+            font-family: "DM Sans", sans-serif;
+            margin: 0 0 30px 0;
+            line-height: 1.4;
+            color: #000000 !important;
+        }
+
+        img {
+            border-radius: 5%;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .cta-button {
+            display: inline-block;
+            margin: 40px 0;
+            width: clamp(150px, 30vw, 250px);
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        .sectione {
+            margin: 300px 0 100px 0;
+            position: relative;
+        }
+
+        .sectione-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .sectione-image {
+            flex: 0 0 37%;
+            max-width: 37%;
+        }
+
+        .sectione-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .sectione-text h2 {
+            text-align: left;
+        }
+
+        /* Фиксированный отступ 402px */
+        .section {
+            margin: 402px 0 0px 0;
+            position: relative;
+        }
+
+        .section-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .section-image {
+            flex: 0 0 37%;
+            max-width: 37%;
+        }
+
+        .section-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .section-text h2 {
+            text-align: left;
+        }
+
+        .learn-more {
+            display: inline-block;
+            width: clamp(150px, 20vw, 250px);
+            margin-top: 20px;
+            float: right;
+        }
+
+        .section-content {
+            flex-direction: row;
+        }
+
+        .sectione-content {
+            flex-direction: row-reverse;
+        }
+
+        .narod {
+            margin: 190px 0 100px 0;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .narod-btn {
+            display: inline-block;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .narod-btn img {
+            margin: 0 auto;
+            display: block;
+            width: 100%;
+            max-width: 1303px;
+        }
+
+        .map {
+            margin: 410px 0 100px 0;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-img {
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .contacts {
+            margin: 400px 0 50px 156px;
+             font-family: "Unbounded", sans-serif;
+        }
+
+        /* Адаптивные стили с пропорциональным уменьшением от 402px */
+        @media (max-width: 1600px) {
+            body {
+                margin-left: 8%;
+                margin-right: 8%;
+            }
+            
+            h1 {
+                font-size: 500%;
+            }
+            
+            .subtitle {
+                font-size: 200%;
+            }
+            
+            h2 {
+                font-size: 250%;
+            }
+            
+            p {
+                font-size: 180%;
+            }
+            
+            /* Сохраняем пропорцию: 80% от 402px = 321.6px */
+            .section {
+                margin: 321.6px 0 80px 0;
+            }
+            
+            .sectione {
+                margin: 215.2px 0 80px 0;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            body {
+                margin-left: 6%;
+                margin-right: 6%;
+            }
+            
+            h1 {
+                font-size: 400%;
+            }
+            
+            .subtitle {
+                font-size: 170%;
+            }
+            
+            h2 {
+                font-size: 210%;
+            }
+            
+            p {
+                font-size: 150%;
+            }
+            
+            .section-image,
+            .sectione-image {
+                flex: 0 0 45%;
+                max-width: 45%;
+            }
+            
+            /* Сохраняем пропорцию: 70% от 402px = 281.4px */
+            .section {
+                margin: 281.4px 0 70px 0;
+            }
+            
+            .sectione {
+                margin: 188.3px 0 70px 0;
+            }
+            
+            .narod {
+                margin: 150px 0 80px 0;
+            }
+        }
+
+        @media (max-width: 992px) {
+            body {
+                margin-left: 5%;
+                margin-right: 5%;
+                margin-top: 5%;
+            }
+            
+            h1 {
+                font-size: 320%;
+            }
+            
+            .subtitle {
+                font-size: 140%;
+            }
+            
+            h2 {
+                font-size: 180%;
+            }
+            
+            p {
+                font-size: 120%;
+            }
+            
+            /* Сохраняем пропорцию: 60% от 402px = 241.2px */
+            .section {
+                margin: 241.2px 0 60px 0;
+            }
+            
+            .sectione {
+                margin: 161.4px 0 60px 0;
+            }
+            
+            .section-content,
+            .sectione-content {
+                flex-direction: column;
+            }
+            
+            .section-image,
+            .sectione-image {
+                flex: 1 1 100%;
+                max-width: 100%;
+                order: 1; /* На мобильных изображение сверху */
+            }
+            
+            .section-text,
+            .sectione-text {
+                text-align: center;
+                order: 2; /* На мобильных текст снизу */
+            }
+            
+            .section-text h2,
+            .sectione-text h2 {
+                text-align: center;
+            }
+            
+            .learn-more {
+                float: none;
+                margin: 20px auto 0;
+                display: block;
+            }
+            
+            .narod {
+                margin: 120px 0 60px 0;
+            }
+            
+            .narod-btn {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                margin-left: 4%;
+                margin-right: 4%;
+                margin-top: 8%;
+            }
+            
+            h1 {
+                font-size: 250%;
+            }
+            
+            .subtitle {
+                font-size: 110%;
+            }
+            
+            h2 {
+                font-size: 140%;
+            }
+            
+            p {
+                font-size: 100%;
+            }
+            
+            .logo {
+                width: 40px;
+                margin-bottom: 25px;
+            }
+            
+            .cta-button {
+                width: clamp(120px, 40vw, 200px);
+                margin: 30px 0;
+            }
+            
+            /* Сохраняем пропорцию: 50% от 402px = 201px */
+            .section {
+                margin: 201px 0 50px 0;
+            }
+            
+            .sectione {
+                margin: 134.5px 0 50px 0;
+            }
+            
+            /* Адаптивность бургер-меню */
+            .burger-menu-content {
+                width: 250px;
+            }
+            
+            .menu-link {
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+            
+            .menu-icon {
+                font-size: 18px;
+                margin-right: 10px;
+            }
+            
+            .narod {
+                margin: 100px 0 50px 0;
+            }
+            
+            .narod-btn {
+                max-width: 95%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                margin-left: 3%;
+                margin-right: 3%;
+                margin-top: 10%;
+            }
+            
+            h1 {
+                font-size: 200%;
+            }
+            
+            .subtitle {
+                font-size: 90%;
+            }
+            
+            h2 {
+                font-size: 120%;
+            }
+            
+            p {
+                font-size: 85%;
+            }
+            
+            .logo {
+                width: 35px;
+                margin-bottom: 20px;
+            }
+            
+            .cta-button {
+                width: clamp(100px, 50vw, 150px);
+                margin: 25px 0;
+            }
+            
+            /* Сохраняем пропорцию: 40% от 402px = 160.8px */
+            .section {
+                margin: 160.8px 0 40px 0;
+            }
+            
+            .sectione {
+                margin: 107.6px 0 40px 0;
+            }
+            
+            .learn-more {
+                width: clamp(80px, 30vw, 120px);
+            }
+            
+            .burger-menu-content {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .narod {
+                margin: 80px 0 40px 0;
+            }
+            
+            .narod-btn {
+                max-width: 100%;
+            }
+            
+            .narod-btn img {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            body {
+                margin-left: 2.5%;
+                margin-right: 2.5%;
+                margin-top: 12%;
+            }
+            
+            h1 {
+                font-size: 170%;
+            }
+            
+            .subtitle {
+                font-size: 80%;
+            }
+            
+            h2 {
+                font-size: 100%;
+            }
+            
+            p {
+                font-size: 75%;
+            }
+            
+            .logo {
+                width: 30px;
+                margin-bottom: 15px;
+            }
+            
+            /* Сохраняем пропорцию: 30% от 402px = 120.6px */
+            .section {
+                margin: 120.6px 0 30px 0;
+            }
+            
+            .sectione {
+                margin: 80.7px 0 30px 0;
+            }
+            
+            .narod {
+                margin: 60px 0 30px 0;
+            }
+        }
+
+        /* Для очень высоких экранов */
+        @media (min-height: 1200px) {
+            body {
+                padding-bottom: 100px;
+            }
+            
+            /* Сохраняем пропорцию: 120% от 402px = 482.4px */
+            .section {
+                margin: 482.4px 0 120px 0;
+            }
+            
+            .sectione {
+                margin: 322.8px 0 120px 0;
+            }
+            
+            .narod {
+                margin: 250px 0 120px 0;
+            }
+        }
+
+        /* Поддержка landscape ориентации */
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                margin-top: 2%;
+            }
+            
+            .section-content,
+            .sectione-content {
+                flex-wrap: nowrap;
+                align-items: flex-start;
+            }
+            
+            .section-image,
+            .sectione-image {
+                flex: 0 0 40%;
+            }
+            
+            /* Меньший отступ для landscape как на 400px */
+            .section {
+                margin: 120.6px 0 30px 0;
+            }
+            
+            .sectione {
+                margin: 80.7px 0 30px 0;
+            }
+            
+            .burger-menu-content {
+                padding-top: 60px;
+            }
+            
+            .narod {
+                margin: 40px 0 30px 0;
+            }
+        }
+
+        /* Для печати */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            
+            .cta-button,
+            .learn-more {
+                display: none !important;
+            }
+            
+            .section-content,
+            .sectione-content {
+                display: block !important;
+            }
+            
+            .section-image,
+            .sectione-image {
+                float: left;
+                width: 40% !important;
+                margin-right: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .burger-menu {
+                display: none !important;
+            }
+            
+            .narod {
+                display: none !important;
+            }
+        }
+
+        /* Улучшение для устройств с touch */
+        @media (hover: none) and (pointer: coarse) {
+            .cta-button:hover {
+                transform: none;
+            }
+            
+            button, a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* Для ретина дисплеев */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                background-size: cover;
+                background-position: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Бургер-меню -->
+    <div class="burger-menu">
+        <button class="burger-btn" aria-label="Меню">
+            <span class="burger-line"></span>
+            <span class="burger-line"></span>
+            <span class="burger-line"></span>
+        </button>
+        <div class="burger-menu-content">
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <a href="#" class="menu-link" data-target="top">
+                        <span class="menu-icon">🏠︎</span>
+                        <span>Главная</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="forum.html" class="menu-link">
+                        <span class="menu-icon">🗨</span>
+                        <span>Посты</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="#section1" class="menu-link">
+                        <span class="menu-icon">𖨆</span>
+                        <span>Народы</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="https://t.me/ad3xer" class="menu-link" target="_blank">
+                        <span class="menu-icon">✎</span>
+                        <span>Написать нам</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="qsn.html" class="menu-link">
+                        <span class="menu-icon">?</span>
+                        <span>Частые вопросы</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="burger-overlay"></div>
+    </div>
+
+    <img src="logo.png" class="logo" alt="Логотип">
+    
+    <h1>Узнай больше<br>о России</h1>
+    <p class="subtitle">Погрузись в увлекательное<br>путешествие по народам России!</p>
+    
+    <a href="#section1" class="cta-button">
+        <img src="Go.png" alt="Начать путешествие">
+    </a>
+    
+    <div class="section" id="section1">
+        <div class="section-content">
+            <div class="section-image">
+                <img src="kavkaz.png" alt="Народы Северного Кавказа">
+            </div>
+            <div class="section-text">
+                <h2>Народы Северного Кавказа</h2>
+                <p>Северный Кавказ — многонациональный регион России, где проживают представители разных этнических групп. Некоторые из них: адыги, аварцы...</p>
+                <img src="Uznat.png" class="learn-more" alt="Узнать больше">
+            </div>
+        </div>
+    </div>
+    
+    <div class="sectione">
+        <div class="sectione-content">
+            <div class="sectione-text">
+                <h2>Тюркские народы</h2>
+                <p>Тюрки — многочисленный народ, имеющий за плечами огромный жизненный опыт, накопленный поколениями. Сейчас их общность насчитывает...</p>
+                <img src="Uznat.png" class="learn-more" alt="Узнать больше">
+            </div>
+            <div class="sectione-image">
+                <img src="image 6.png" alt="Тюрки">
+            </div>
+        </div>
+    </div>
+       
+    <div class="sectione">
+         <div class="sectione-content">
+            <div class="sectione-text">
+                <h2>Фино-угюрские народы</h2>
+                <p>Есть несколько версий происхождения финно-угорских народов. В самой популярной предполагается, что это племя зародилось на...</p>
+                <img src="Uznat.png" class="learn-more" alt="Узнать больше">
+            </div>
+            <div class="sectione-image">
+                <img src="fin.png">
+            </div>    
+         </div>    
+    </div>   
+    
+    <div class="sectione">
+         <div class="sectione-content">
+            <div class="sectione-text">
+                <h2>Монгольские народы</h2>
+                <p>Монголы стали известны миру как опытные завоеватели и превосходные воины. Однако их история, быт, культура настолько богаты, что...</p>
+                <img src="Uznat.png" class="learn-more" alt="Узнать больше">
+            </div>
+            <div class="sectione-image">
+                <img src="mong.png">
+            </div>    
+         </div>    
+    </div>
+
+    <div class="narod">
+        <div class="narod-btn">
+            <img src="more.png" alt="Еще 10 народов России">
+        </div>
+    </div>
+
+    <div class="map">
+        <div class="map-img">
+           <img src="map.png">
+        </div>
+    </div>
+
+    <div class="contacts">
+        По всем вопросам:               Телефоны для связи:
+                      Наш адрес:<br>
+        Vadimbureev380@gmail.com         +79046934539                  		г.Липецк <a href="https://yandex.ru/maps/-/CLxUrMYh"> ул. Космонавтов, 20/3</a><br>
+        Mohito166@ya.ru               +79521488676<br>
+        admin@molodezshka.ru           +79205360109
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const burgerMenu = document.querySelector('.burger-menu');
+            const burgerBtn = document.querySelector('.burger-btn');
+            const burgerOverlay = document.querySelector('.burger-overlay');
+            const menuLinks = document.querySelectorAll('.menu-link');
+            
+            // Открытие/закрытие 
+            burgerBtn.addEventListener('click', function() {
+                burgerMenu.classList.toggle('active');
+                document.body.style.overflow = burgerMenu.classList.contains('active') ? 'hidden' : '';
+            });
+            
+            burgerOverlay.addEventListener('click', function() {
+                burgerMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            // Закрытие меню при клике на ссылку
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Для ссылки "Главная" делаем плавную прокрутку
+                    if (this.getAttribute('data-target') === 'top') {
+                        e.preventDefault();
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }
+                    
+                    // Закрываем меню
+                    burgerMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+            
+            // Закрытие меню при нажатии на Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && burgerMenu.classList.contains('active')) {
+                    burgerMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            // Подсветка активного пункта меню
+            const currentPage = window.location.pathname.split('/').pop();
+            menuLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage || 
+                   (currentPage === '' && link.getAttribute('data-target') === 'top')) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

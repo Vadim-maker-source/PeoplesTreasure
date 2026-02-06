@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { peoples } from '@/app/lib/peoples';
@@ -9,11 +9,14 @@ import { Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import debounce from 'lodash/debounce';
 
 export default function Forum() {
   const [selectedEthnicGroup, setSelectedEthnicGroup] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<PostWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,14 +37,71 @@ export default function Forum() {
       }
 
       setPosts(result.posts);
+      setFilteredPosts(result.posts);
       setTotalPages(result.pagination.totalPages);
       setTotalCount(result.pagination.totalCount);
     } catch (error) {
       console.error(error);
+      toast.error('Ошибка при загрузке постов');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Функция поиска с использованием useCallback для мемоизации
+  const performSearch = useCallback((query: string) => {
+    if (!query.trim()) {
+      setFilteredPosts(posts);
+      return;
+    }
+
+    const lowercasedQuery = query.toLowerCase().trim();
+    
+    const filtered = posts.filter(post => {
+      // Поиск по названию
+      if (post.title.toLowerCase().includes(lowercasedQuery)) {
+        return true;
+      }
+      
+      // Поиск по автору
+      const authorFullName = `${post.author.firstName} ${post.author.lastName}`.toLowerCase();
+      if (authorFullName.includes(lowercasedQuery)) {
+        return true;
+      }
+      
+      // Поиск по тегам
+      const hasMatchingTag = post.tags.some(tag => 
+        tag.toLowerCase().includes(lowercasedQuery)
+      );
+      if (hasMatchingTag) {
+        return true;
+      }
+      
+      // Поиск по контенту
+      if (post.content.toLowerCase().includes(lowercasedQuery)) {
+        return true;
+      }
+      
+      return false;
+    });
+
+    setFilteredPosts(filtered);
+  }, [posts]);
+
+  // Debounced версия поиска
+  const debouncedSearch = useMemo(
+    () => debounce((query: string) => {
+      performSearch(query);
+    }, 300),
+    [performSearch]
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery, debouncedSearch]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -53,6 +113,19 @@ export default function Forum() {
       fetchPosts();
     }
   }, [currentPage]);
+
+  // Сортировка отфильтрованных постов
+  const sortedPosts = useMemo(() => {
+    const postsToSort = [...filteredPosts];
+    
+    if (sortBy === 'newest') {
+      return postsToSort.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    } else {
+      return postsToSort.sort((a, b) => b.likes - a.likes);
+    }
+  }, [filteredPosts, sortBy]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -76,7 +149,8 @@ export default function Forum() {
     try {
       const result = await toggleLike(postId);
       if (result.success) {
-        setPosts(prev => prev.map(post => {
+        // Обновляем посты
+        const updatedPosts = posts.map(post => {
           if (post.id !== postId) return post;
           
           const updatedPost: PostWithAuthor = {
@@ -86,13 +160,27 @@ export default function Forum() {
           };
           
           return updatedPost;
-        }));
+        });
+        
+        setPosts(updatedPosts);
+        
+        // Также обновляем отфильтрованные посты
+        const updatedFilteredPosts = filteredPosts.map(post => {
+          if (post.id !== postId) return post;
+          
+          const updatedPost: PostWithAuthor = {
+            ...post,
+            likes: typeof result.likes === 'number' ? result.likes : post.likes,
+            likedByUser: typeof result.liked === 'boolean' ? result.liked : post.likedByUser
+          };
+          
+          return updatedPost;
+        });
+        
+        setFilteredPosts(updatedFilteredPosts);
       } else {
         if (result.isAuthError) {
           toast.error('Для добавления лайка необходимо авторизоваться', {
-            // style: {
-            //   background: "red"
-            // },
             action: {
               label: 'Войти',
               onClick: () => router.push('/sign-in'),
@@ -103,7 +191,7 @@ export default function Forum() {
         }
       }
     } catch (error) {
-      toast.error(error as string)
+      toast.error(error as string);
       console.error(error);
     }
   };
@@ -112,10 +200,10 @@ export default function Forum() {
     try {
       const url = `${window.location.origin}/posts/${postId}`;
       await navigator.clipboard.writeText(url);
-      toast.success('Ссылка на пост успешно скопирована!')
+      toast.success('Ссылка на пост успешно скопирована!');
     } catch (error) {
       console.error(error);
-      toast.error('Произошла ошибка')
+      toast.error('Произошла ошибка');
     }
   };
 
@@ -132,6 +220,14 @@ export default function Forum() {
 
   const handleSortChange = (sortType: 'newest' | 'popular') => {
     setSortBy(sortType);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
   };
 
   if (isLoading) {
@@ -174,6 +270,32 @@ export default function Forum() {
               </div>
             </div>
 
+            {/* Поиск */}
+            <div className="relative w-full md:w-auto">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Ищите по названию, автору или хештегам..." 
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full md:w-80 px-4 py-2 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none placeholder-gray-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <div className="absolute top-full left-0 right-0 mt-1 text-sm text-gray-500">
+                  Найдено {filteredPosts.length} из {posts.length} постов
+                </div>
+              )}
+            </div>
+
             {/* Сортировка */}
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex items-center gap-2">
@@ -194,9 +316,9 @@ export default function Forum() {
                 </div>
               </div>
               <Link href="/create-post">
-              <button className="px-4 py-2 rounded-xl bg-orange-500 text-white flex items-center hover:opacity-80 cursor-pointer duration-200">
-                <Plus className="aspect-square" /> Добавить пост
-              </button>
+                <button className="px-4 py-2 rounded-xl bg-orange-500 text-white flex items-center hover:opacity-80 cursor-pointer duration-200">
+                  <Plus className="aspect-square" /> Добавить пост
+                </button>
               </Link>
             </div>
           </div>
@@ -208,7 +330,11 @@ export default function Forum() {
         {/* Статистика и информация о сортировке */}
         <div className="mb-8 flex justify-between items-center">
           <p className="text-gray-600">
-            Показано {posts.length} из {totalCount} постов
+            {searchQuery ? (
+              <>Найдено {filteredPosts.length} из {totalCount} постов</>
+            ) : (
+              <>Показано {filteredPosts.length} из {totalCount} постов</>
+            )}
             {selectedEthnicGroup !== 'all' && ` по народу "${getEthnicGroupName(selectedEthnicGroup)}"`}
           </p>
           <div className="text-sm text-gray-500">
@@ -218,24 +344,43 @@ export default function Forum() {
           </div>
         </div>
 
+        {/* Сообщение если нет результатов поиска */}
+        {searchQuery && filteredPosts.length === 0 && (
+          <div className="text-center py-8 mb-8">
+            <div className="text-4xl mb-4">🔍</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Ничего не найдено
+            </h3>
+            <p className="text-gray-600 mb-4">
+              По запросу "{searchQuery}" не найдено ни одного поста.
+            </p>
+            <button
+              onClick={handleClearSearch}
+              className="text-[#FF7340] hover:text-[#FF4500] font-medium"
+            >
+              Очистить поиск
+            </button>
+          </div>
+        )}
+
         {/* Посты */}
         <div className="space-y-8">
-          {posts.map((post) => (
+          {sortedPosts.map((post) => (
             <div key={post.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
               {/* Шапка поста */}
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Link href={`/profile/${post.author.id}`}>
-                    <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
-                      {post.author.firstName[0]}{post.author.lastName[0]}
-                    </div>
+                      <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
+                        {post.author.firstName[0]}{post.author.lastName[0]}
+                      </div>
                     </Link>
                     <div>
                       <Link href={`/profile/${post.author.id}`}>
-                      <h3 className="font-bold text-gray-900">
-                        {post.author.firstName} {post.author.lastName}
-                      </h3>
+                        <h3 className="font-bold text-gray-900">
+                          {post.author.firstName} {post.author.lastName}
+                        </h3>
                       </Link>
                       <p className="text-sm text-gray-500">
                         {formatDate(post.createdAt)}
@@ -249,7 +394,7 @@ export default function Forum() {
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">{post.title}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{post.title}</h2>
               </div>
 
               {/* Слайдер изображений */}
@@ -368,7 +513,7 @@ export default function Forum() {
         </div>
 
         {/* Сообщение если нет постов */}
-        {posts.length === 0 && (
+        {posts.length === 0 && !isLoading && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📝</div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
@@ -379,17 +524,16 @@ export default function Forum() {
                 ? `Пока никто не поделился информацией о народе "${getEthnicGroupName(selectedEthnicGroup)}"`
                 : 'Будьте первым, кто поделится знаниями о культуре народов России!'}
             </p>
-            <a 
-              href="/create-post"
-              className="inline-flex items-center gap-2 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <span>Создать первый пост</span>
-            </a>
+            <Link href="/create-post">
+              <button className="inline-flex items-center gap-2 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+                <span>Создать первый пост</span>
+              </button>
+            </Link>
           </div>
         )}
 
-        {/* Пагинация */}
-        {totalPages > 1 && (
+        {/* Пагинация - показываем только если нет активного поиска */}
+        {!searchQuery && totalPages > 1 && (
           <div className="mt-12 flex justify-center">
             <nav className="flex items-center gap-2">
               <button
