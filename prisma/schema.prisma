@@ -53,7 +53,6 @@ model User {
   posts         Post[]
   comments      Comment[]
   courses       Course[]
-  likes Like[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -69,7 +68,7 @@ model Post {
   ethnicGroupId String?
   images       String[]
   tags         String[]
-  likes Like[]
+  likes        Int      @default(0)
   
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments    Comment[]
@@ -78,20 +77,6 @@ model Post {
   updatedAt   DateTime @updatedAt
   
   @@map("posts")
-}
-
-model Like {
-  id     String @id @default(cuid())
-  userId String
-  postId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, postId])
-  @@map("likes")
 }
 
 model Comment {
