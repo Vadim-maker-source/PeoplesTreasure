@@ -20,7 +20,7 @@ export type PostWithAuthor = {
     lastName: string;
     email: string;
     avatar?: string | null;
-    verified: boolean | null;
+    verified?: boolean | null;
   };
   createdAt: Date;
   updatedAt: Date;
