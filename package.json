@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@fortawesome/free-regular-svg-icons": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/react-fontawesome": "^3.2.0",
     "@prisma/client": "^6.18.0",
     "@types/nodemailer": "^7.0.5",
     "@vercel/blob": "^2.0.0",

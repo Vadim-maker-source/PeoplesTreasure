@@ -11,6 +11,7 @@ const config: Config = {
       fontFamily: {
         unbounded: ["var(--font-unbounded)"],
         sans: ["var(--font-geist-sans)"],
+        nunito: ["var(--font-nunito)"],
       },
     },
   },

@@ -27,6 +27,8 @@ export type User = {
   avatar?: string | null;
   region?: string | null;
   bio?: string | null;
+  verified: boolean;
+  unreadSupportCount?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -129,6 +131,7 @@ export async function getUserById(id: string): Promise<UserWithRelations | null>
         avatar: true,
         region: true,
         bio: true,
+        verified: true,
         createdAt: true,
         updatedAt: true,
         posts: {
@@ -214,6 +217,8 @@ export async function getCurrentUser(): Promise<User | null> {
         avatar: true,
         region: true,
         bio: true,
+        verified: true,
+        unreadSupportCount: true,
         createdAt: true,
         updatedAt: true,
         _count: {

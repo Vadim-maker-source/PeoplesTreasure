@@ -251,7 +251,7 @@
     @apply bg-background text-foreground;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-unbounded), sans-serif;
+    font-family: var(--font-nunito), sans-serif;
   }
   p, span {
     font-family: var(--font-sans), sans-serif;

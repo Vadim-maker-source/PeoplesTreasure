@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import debounce from 'lodash/debounce';
+import Image from 'next/image';
 
 export default function Forum() {
   const [selectedEthnicGroup, setSelectedEthnicGroup] = useState<string>('all');
@@ -48,7 +49,6 @@ export default function Forum() {
     }
   };
 
-  // Функция поиска с использованием useCallback для мемоизации
   const performSearch = useCallback((query: string) => {
     if (!query.trim()) {
       setFilteredPosts(posts);
@@ -58,18 +58,15 @@ export default function Forum() {
     const lowercasedQuery = query.toLowerCase().trim();
     
     const filtered = posts.filter(post => {
-      // Поиск по названию
       if (post.title.toLowerCase().includes(lowercasedQuery)) {
         return true;
       }
       
-      // Поиск по автору
       const authorFullName = `${post.author.firstName} ${post.author.lastName}`.toLowerCase();
       if (authorFullName.includes(lowercasedQuery)) {
         return true;
       }
       
-      // Поиск по тегам
       const hasMatchingTag = post.tags.some(tag => 
         tag.toLowerCase().includes(lowercasedQuery)
       );
@@ -77,7 +74,6 @@ export default function Forum() {
         return true;
       }
       
-      // Поиск по контенту
       if (post.content.toLowerCase().includes(lowercasedQuery)) {
         return true;
       }
@@ -88,7 +84,6 @@ export default function Forum() {
     setFilteredPosts(filtered);
   }, [posts]);
 
-  // Debounced версия поиска
   const debouncedSearch = useMemo(
     () => debounce((query: string) => {
       performSearch(query);
@@ -114,7 +109,6 @@ export default function Forum() {
     }
   }, [currentPage]);
 
-  // Сортировка отфильтрованных постов
   const sortedPosts = useMemo(() => {
     const postsToSort = [...filteredPosts];
     
@@ -149,7 +143,6 @@ export default function Forum() {
     try {
       const result = await toggleLike(postId);
       if (result.success) {
-        // Обновляем посты
         const updatedPosts = posts.map(post => {
           if (post.id !== postId) return post;
           
@@ -164,7 +157,6 @@ export default function Forum() {
         
         setPosts(updatedPosts);
         
-        // Также обновляем отфильтрованные посты
         const updatedFilteredPosts = filteredPosts.map(post => {
           if (post.id !== postId) return post;
           
@@ -378,8 +370,10 @@ export default function Forum() {
                     </Link>
                     <div>
                       <Link href={`/profile/${post.author.id}`}>
-                        <h3 className="font-bold text-gray-900">
-                          {post.author.firstName} {post.author.lastName}
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                          {post.author.firstName} {post.author.lastName} {post.author.verified && (
+                            <Image src="/images/verified.png" alt="" width={18} height={18} />
+                          )}
                         </h3>
                       </Link>
                       <p className="text-sm text-gray-500">

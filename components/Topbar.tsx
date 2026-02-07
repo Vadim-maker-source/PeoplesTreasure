@@ -97,6 +97,25 @@ const Topbar = () => {
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/support">Написать нам</Link></p>
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/forum">Форум</Link></p>
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/event">События</Link></p>
+          {user?.id === '1' && (
+    <Link href="/admin/support" className="relative">
+        Поддержка (админ)
+        {Number(user?.unreadSupportCount) > 0 && (
+            <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {user.unreadSupportCount}
+            </span>
+        )}
+    </Link>
+)}
+
+<Link href="/my-support" className="relative">
+    Мои обращения
+    {Number(user?.unreadSupportCount) > 0 && (
+        <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            {user?.unreadSupportCount}
+        </span>
+    )}
+</Link>
         </div>
 
         <div className="md:hidden">

@@ -47,12 +47,15 @@ model User {
   region       String?
   bio          String?
   role         String    @default("USER")
+  verified     Boolean?  @default(false)
+  unreadSupportCount Int? @default(0)
   
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
   comments      Comment[]
   courses       Course[]
+  support       Support[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -112,4 +115,25 @@ model Course {
   
   @@unique([userId, ethnicGroupId])
   @@map("courses")
+}
+
+model Support {
+  id             String   @id @default(cuid())
+  userId         String
+  subject        String
+  message        String
+  answer         String?
+  status         String   @default("pending")
+  isReadByUser   Boolean  @default(false)
+  isReadByAdmin  Boolean  @default(false)
+  
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([isReadByUser])
 }

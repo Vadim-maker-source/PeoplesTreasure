@@ -9,6 +9,7 @@ import { createComment, deleteComment, deletePost, getPostById, toggleLike, upda
 import { AlertTriangle, ChevronLeft, Edit, Loader2, MoreVertical, Save, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCurrentUser, User } from '@/app/lib/api/user';
+import Image from 'next/image';
 
 type Comment = {
   id: string;
@@ -493,7 +494,9 @@ export default function PostPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-bold text-gray-900 text-base md:text-lg truncate">
-                      {post.author.firstName} {post.author.lastName}
+                      {post.author.firstName} {post.author.lastName} {post.author.verified && (
+                        <Image src="/images/verified.png" alt="" width={18} height={18} />
+                      )}
                     </h3>
                     <p className="text-xs md:text-sm text-gray-500">
                       {formatDate(post.createdAt)}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Unbounded } from "next/font/google";
+import { Geist, Nunito, Unbounded } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -8,6 +8,12 @@ const geistSans = Geist({
 });
 
 const unbounded = Unbounded({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-unbounded',
+});
+
+const nunito = Nunito({
   subsets: ['latin', 'cyrillic'],
   display: 'swap',
   variable: '--font-unbounded',
@@ -27,9 +33,10 @@ export default function RootLayout({
     <html lang="ru">
       <body
         className={`
-          ${unbounded.variable} 
-          ${geistSans.variable} 
-          ${geistSans.className} 
+          ${unbounded.variable}
+          ${geistSans.variable}
+          ${geistSans.className}
+          ${nunito.variable} 
           antialiased scroll-smooth bg-[#FFF9F9]
         `}
       >

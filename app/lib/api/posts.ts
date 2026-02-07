@@ -20,6 +20,7 @@ export type PostWithAuthor = {
     lastName: string;
     email: string;
     avatar?: string | null;
+    verified: boolean | null;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +67,7 @@ export async function getAllPosts(
             lastName: true,
             email: true,
             avatar: true,
+            verified: true
           },
         },
         _count: {
@@ -142,6 +144,7 @@ export async function getAllPosts(
                   firstName: true,
                   lastName: true,
                   avatar: true,
+                  verified: true
                 },
               },
             },
@@ -213,6 +216,7 @@ export async function getAllPosts(
               lastName: true,
               email: true,
               avatar: true,
+              verified: true
             },
           },
           _count: {
@@ -281,6 +285,7 @@ export async function getPopularPosts(limit: number = 10) {
             lastName: true,
             email: true,
             avatar: true,
+            verified: true
           },
         },
         _count: {
@@ -375,6 +380,7 @@ export async function createComment(postId: string, content: string) {
               firstName: true,
               lastName: true,
               avatar: true,
+              verified: true
             },
           },
         },
@@ -453,6 +459,7 @@ export async function updateComment(commentId: string, content: string) {
             firstName: true,
             lastName: true,
             avatar: true,
+            verified: true
           },
         },
       },

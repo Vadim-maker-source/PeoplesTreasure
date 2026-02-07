@@ -26,8 +26,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import Image from 'next/image'
 
-// Типы для данных
 type SafeUser = {
   id: string;
   email: string;
@@ -39,6 +39,7 @@ type SafeUser = {
   avatar?: string | null;
   region?: string | null;
   bio?: string | null;
+  verified: boolean;
   createdAt: Date;
   updatedAt: Date;
   posts?: any[];
@@ -172,6 +173,7 @@ export default function Profile() {
       avatar: data.avatar || null,
       region: data.region || null,
       bio: data.bio || null,
+      verified: data.verified,
       createdAt: data.createdAt || new Date(),
       updatedAt: data.updatedAt || new Date(),
       posts: data.posts || [],
@@ -353,8 +355,10 @@ export default function Profile() {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white">
-                    {user.firstName} {user.lastName}
+                  <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    {user.firstName} {user.lastName} {user.verified && (
+                      <Image src="/images/verified.png" alt="" width={24} height={24} />
+                    )}
                   </h1>
                   <p className="text-white/90">{user.email}</p>
                   {user.bio && (
