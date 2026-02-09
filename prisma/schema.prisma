@@ -47,7 +47,7 @@ model User {
   region       String?
   bio          String?
   role         String    @default("USER")
-  verified     Boolean?  @default(false)
+  verified     Boolean  @default(false)
   unreadSupportCount Int? @default(0)
   
   accounts      Account[]
