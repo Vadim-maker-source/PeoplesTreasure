@@ -88,7 +88,8 @@ const Topbar = () => {
           shadow-md
         `}
       >
-        <img src="/images/logo2.png" alt="Логотип" className="h-9 w-76" />
+        <img src="/images/logo2.png" alt="Логотип" className="h-9 w-76 hidden md:block" />
+        <img src="/images/logo.png" alt="Логотип" className="h-9 aspect-square block md:hidden" />
         
         <div className="hidden md:flex items-center justify-between gap-8">
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/">Главная</Link></p>

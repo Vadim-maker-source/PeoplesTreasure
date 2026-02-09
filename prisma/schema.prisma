@@ -56,6 +56,8 @@ model User {
   comments      Comment[]
   courses       Course[]
   support       Support[]
+  musicLikes  UserMusicLike[]
+  playlists   Playlist[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -136,4 +138,83 @@ model Support {
   @@index([status])
   @@index([createdAt])
   @@index([isReadByUser])
+}
+
+model MusicTrack {
+  id               String   @id @default(cuid())
+  soundcloudId     String   @unique
+  title            String
+  artist           String
+  artistId         String?
+  artistAvatar     String?
+  genre            String?
+  duration         Int      // в миллисекундах
+  tags             String[]
+  description      String?
+  permalinkUrl     String   // Ссылка на SoundCloud
+  streamUrl        String?  // Ссылка для стриминга
+  thumbnailUrl     String
+  likesCount       Int      @default(0)
+  playbackCount    Int      @default(0)
+  
+  // Лайки пользователей
+  userLikes      UserMusicLike[]
+  
+  // Плейлисты
+  playlistTracks PlaylistTrack[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([soundcloudId])
+  @@index([artist])
+  @@index([genre])
+  @@index([createdAt])
+  @@index([playbackCount])
+  @@map("music_tracks")
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean  @default(true)
+  imageUrl    String?
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks      PlaylistTrack[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id          String   @id @default(cuid())
+  playlistId  String
+  musicTrackId String
+  order       Int      // Порядок в плейлисте
+  addedAt     DateTime @default(now())
+  
+  playlist    Playlist   @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  musicTrack  MusicTrack @relation(fields: [musicTrackId], references: [id], onDelete: Cascade)
+  
+  @@unique([playlistId, musicTrackId])
+  @@map("playlist_tracks")
+}
+
+model UserMusicLike {
+  id           String   @id @default(cuid())
+  userId       String
+  musicTrackId String
+  
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  musicTrack   MusicTrack @relation(fields: [musicTrackId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  
+  @@unique([userId, musicTrackId])
+  @@map("user_music_likes")
 }
