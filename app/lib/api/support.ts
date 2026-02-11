@@ -97,7 +97,6 @@ export async function getUserSupportTickets(
       },
     });
 
-    // Обновляем счетчик в профиле пользователя (кешируем)
     await prisma.user.update({
       where: { id: user.id },
       data: { unreadSupportCount: unreadCount },
@@ -125,7 +124,6 @@ export async function getUserSupportTickets(
   }
 }
 
-// Получить все обращения (для админа - пользователь с id = 1)
 export async function getAllSupportTickets(
   page: number = 1,
   limit: number = 20,
