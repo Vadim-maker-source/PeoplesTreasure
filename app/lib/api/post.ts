@@ -7,7 +7,6 @@ import { prisma } from '../prisma';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
 
-// 🔑 ИСПРАВЛЕНО: Убраны лишние пробелы в endpoint (было "https://...  ")
 const s3Client = new S3Client({
   endpoint: process.env.YANDEX_ENDPOINT?.trim() || "https://storage.yandexcloud.net",
   region: process.env.YANDEX_REGION || "ru-central1",
@@ -15,7 +14,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.YANDEX_ACCESS!,
     secretAccessKey: process.env.YANDEX_SECRET!,
   },
-  forcePathStyle: true, // Обязательно для Яндекс.Облака!
+  forcePathStyle: true,
 });
 
 type CreatePostData = {
@@ -26,9 +25,7 @@ type CreatePostData = {
   images: File[];
 };
 
-// 🌥️ Функция загрузки в Яндекс.Облако (без дублирования валидации)
 export async function uploadImage(file: File): Promise<{ url: string }> {
-  // Валидация вынесена в основную функцию для точного сообщения об ошибке
   const buffer = Buffer.from(await file.arrayBuffer());
   
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -45,7 +42,6 @@ export async function uploadImage(file: File): Promise<{ url: string }> {
     })
   );
 
-  // ✅ Правильный формат URL для Яндекс.Облака с forcePathStyle
   return { 
     url: `https://storage.yandexcloud.net/peoples-treasure/${key}`
   };
