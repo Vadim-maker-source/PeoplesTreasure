@@ -43,5 +43,3 @@ next-env.d.ts
 /app/generated/prisma
 /app/music
 /app/admin/music
-/app/lip/api/music-service.ts
-/app/lib/soundcloud.ts
