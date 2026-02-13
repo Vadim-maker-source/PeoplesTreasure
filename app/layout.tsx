@@ -16,7 +16,7 @@ const unbounded = Unbounded({
 const nunito = Nunito({
   subsets: ['latin', 'cyrillic'],
   display: 'swap',
-  variable: '--font-unbounded',
+  variable: '--font-nunito',
 });
 
 export const metadata: Metadata = {
@@ -36,8 +36,8 @@ export default function RootLayout({
           ${unbounded.variable}
           ${geistSans.variable}
           ${geistSans.className}
-          ${nunito.variable} 
-          antialiased scroll-smooth bg-[#FFF9F9]
+          ${nunito.variable}
+          antialiased scroll-smooth 
         `}
       >
         {children}

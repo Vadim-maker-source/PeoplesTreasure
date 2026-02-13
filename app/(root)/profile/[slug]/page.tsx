@@ -11,7 +11,6 @@ import {
   Phone, 
   Calendar, 
   MapPin, 
-  BookOpen, 
   MessageSquare,
   ThumbsUp,
   FileText,
@@ -93,48 +92,127 @@ type UpdateFormData = {
 }
 
 const ImageGallery = ({ images, title }: { images: string[], title: string }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Функция для определения типа файла
+  const isVideoFile = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
   
   if (!images.length) return null;
   
   const goToNext = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => (prev + 1) % images.length);
   };
   
   const goToPrev = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
   
+  const currentMedia = images[currentIndex];
+  const isVideo = isVideoFile(currentMedia);
+  
   return (
-    <div className="relative mb-4">
-      <div className="relative h-64 md:h-80 w-full rounded-lg overflow-hidden">
-        <img
-          src={images[currentImageIndex]}
-          alt={`Изображение ${currentImageIndex + 1} к посту "${title}"`}
-          className="h-full w-full object-cover"
-        />
+    <div className="relative mb-4 group">
+      <div className="relative h-64 md:h-80 w-full rounded-lg overflow-hidden bg-gray-900">
+        {isVideo ? (
+          <video
+            src={currentMedia}
+            controls
+            className="h-full w-full object-contain"
+            poster="/images/video-poster.jpg" // Опционально: добавьте постер
+          />
+        ) : (
+          <img
+            src={currentMedia}
+            alt={`Изображение ${currentIndex + 1} к посту "${title}"`}
+            className="h-full w-full object-cover"
+          />
+        )}
         
+        {/* Индикатор типа медиа */}
+        <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+          {isVideo ? (
+            <>
+              <span>🎬</span>
+              <span>Видео</span>
+            </>
+          ) : (
+            <>
+              <span>📷</span>
+              <span>Фото</span>
+            </>
+          )}
+        </div>
+        
+        {/* Кнопки навигации */}
         {images.length > 1 && (
           <>
             <button
               onClick={goToPrev}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-opacity opacity-0 group-hover:opacity-100"
+              disabled={isVideo} // Можно отключить навигацию во время воспроизведения видео
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-opacity opacity-0 group-hover:opacity-100"
+              disabled={isVideo}
             >
               <ChevronRight size={20} />
             </button>
           </>
         )}
         
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-          {currentImageIndex + 1} / {images.length}
+        {/* Счетчик */}
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
+          <span>{currentIndex + 1} / {images.length}</span>
+          {isVideo && (
+            <span className="flex items-center gap-1">
+              <span>🎬</span>
+            </span>
+          )}
         </div>
       </div>
+      
+      {/* Миниатюры (превью) */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+          {images.map((media, index) => {
+            const isVideoMedia = isVideoFile(media);
+            return (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
+                  index === currentIndex 
+                    ? 'ring-2 ring-[#FF7340] scale-105' 
+                    : 'opacity-70 hover:opacity-100'
+                }`}
+              >
+                {isVideoMedia ? (
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                    <span className="text-white text-xl">🎬</span>
+                  </div>
+                ) : (
+                  <img
+                    src={media}
+                    alt={`Миниатюра ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                {isVideoMedia && (
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <span className="text-white text-xs">🎬</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

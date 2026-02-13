@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { peoples } from '@/app/lib/peoples'; // Убедитесь, что этот файл существует
+import { peoples } from '@/app/lib/peoples';
 import { getCurrentUser } from './user';
 import { prisma } from '../prisma';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -23,13 +23,28 @@ type CreatePostData = {
   ethnicGroupId: string;
   tags: string;
   images: File[];
+  videos: File[]; // Добавляем видео
 };
 
-export async function uploadImage(file: File): Promise<{ url: string }> {
+// Функция для проверки типа файла
+function isVideoFile(file: File): boolean {
+  return file.type.startsWith('video/');
+}
+
+function isImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
+
+export async function uploadFile(file: File): Promise<{ url: string }> {
   const buffer = Buffer.from(await file.arrayBuffer());
   
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+  const ext = file.name.split('.').pop()?.toLowerCase() || 
+    (isVideoFile(file) ? 'mp4' : 'jpg');
+  
+  const safeExt = isVideoFile(file) 
+    ? ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext) ? ext : 'mp4'
+    : ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+  
   const key = `posts/${Date.now()}-${randomBytes(6).toString('hex')}.${safeExt}`;
 
   await s3Client.send(
@@ -38,7 +53,6 @@ export async function uploadImage(file: File): Promise<{ url: string }> {
       Key: key,
       Body: buffer,
       ContentType: file.type,
-      // ACL: 'public-read',
     })
   );
 
@@ -58,10 +72,10 @@ export async function createPost(formData: CreatePostData) {
       return { success: false, error: 'Выбранный народ не найден' };
     }
 
-    // 🖼️ Загрузка изображений с точной обработкой ошибок
-    const imageUrls: string[] = [];
+    const mediaUrls: string[] = [];
+    
+    // Загрузка изображений
     for (const file of formData.images) {
-      // 🔒 Валидация перед загрузкой (быстрый отказ + понятное сообщение)
       if (file.size > 5 * 1024 * 1024) {
         return { 
           success: false, 
@@ -73,13 +87,13 @@ export async function createPost(formData: CreatePostData) {
       if (!allowedTypes.includes(file.type)) {
         return { 
           success: false, 
-          error: `Недопустимый формат "${file.name}". Разрешены: JPG, PNG, WebP, GIF` 
+          error: `Недопустимый формат изображения "${file.name}". Разрешены: JPG, PNG, WebP, GIF` 
         };
       }
 
       try {
-        const { url } = await uploadImage(file);
-        imageUrls.push(url);
+        const { url } = await uploadFile(file);
+        mediaUrls.push(url);
       } catch (err) {
         console.error('Ошибка загрузки файла:', file.name, err);
         return { 
@@ -89,21 +103,48 @@ export async function createPost(formData: CreatePostData) {
       }
     }
 
-    // 🏷️ Обработка тегов
+    // Загрузка видео
+    for (const file of formData.videos) {
+      if (file.size > 50 * 1024 * 1024) { // 50MB для видео
+        return { 
+          success: false, 
+          error: `Видео "${file.name}" превышает лимит 50 МБ` 
+        };
+      }
+      
+      const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+      if (!allowedTypes.includes(file.type)) {
+        return { 
+          success: false, 
+          error: `Недопустимый формат видео "${file.name}". Разрешены: MP4, WebM, MOV, AVI` 
+        };
+      }
+
+      try {
+        const { url } = await uploadFile(file);
+        mediaUrls.push(url);
+      } catch (err) {
+        console.error('Ошибка загрузки видео:', file.name, err);
+        return { 
+          success: false, 
+          error: `Ошибка загрузки "${file.name}": ${err instanceof Error ? err.message : 'Серверная ошибка'}` 
+        };
+      }
+    }
+
     const tagsArray = formData.tags
       .split(',')
       .map(tag => tag.trim())
-      .filter(tag => tag && tag.length <= 30) // Защита от длинных тегов
+      .filter(tag => tag && tag.length <= 30)
       .slice(0, 10);
 
-    // 💾 Сохранение в БД
     const post = await prisma.post.create({
       data: {
-        title: formData.title.trim().slice(0, 200), // Ограничение длины
+        title: formData.title.trim().slice(0, 200),
         content: formData.content.trim(),
         ethnicGroupId: formData.ethnicGroupId,
         tags: tagsArray,
-        images: imageUrls,
+        images: mediaUrls, // Сохраняем все медиа в одном массиве
         authorId: user.id,
       },
       include: {

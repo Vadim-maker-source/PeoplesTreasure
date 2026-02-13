@@ -11,6 +11,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import debounce from 'lodash/debounce';
 import Image from 'next/image';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
 export default function Forum() {
   const [selectedEthnicGroup, setSelectedEthnicGroup] = useState<string>('all');
@@ -23,6 +25,31 @@ export default function Forum() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [autoplayStates, setAutoplayStates] = useState<Map<string, boolean>>(new Map());
+
+  const handleVideoPlay = (postId: string, isPlaying: boolean) => {
+    setAutoplayStates(prev => {
+      const newMap = new Map(prev);
+      newMap.set(postId, !isPlaying);
+      return newMap;
+    });
+  };
+  
+  const handleVideoEnded = (postId: string) => {
+    setAutoplayStates(prev => {
+      const newMap = new Map(prev);
+      newMap.set(postId, true);
+      return newMap;
+    });
+  };
+  
+  const handleSlideChange = (postId: string) => {
+    setAutoplayStates(prev => {
+      const newMap = new Map(prev);
+      newMap.set(postId, true);
+      return newMap;
+    });
+  };
   
   const router = useRouter();
 
@@ -222,6 +249,11 @@ export default function Forum() {
     setSearchQuery('');
   };
 
+  const isVideoFile = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FFF9F9] py-12">
@@ -243,50 +275,58 @@ export default function Forum() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Фильтр по народам */}
             <div className="flex-1 w-full md:w-auto">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-700 font-medium">Народ:</span>
-                <div className="flex flex-wrap gap-2">
-                  <select
-                    value={selectedEthnicGroup}
-                    onChange={(e) => setSelectedEthnicGroup(e.target.value)}
-                    className="px-4 py-2 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none cursor-pointer"
-                  >
-                    <option value="all">Все народы</option>
-                    {peoples.map(people => (
-                      <option key={people.id} value={people.id}>
-                        {people.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 font-medium">Народ:</span>
+    <div className="relative">
+      <select
+        value={selectedEthnicGroup}
+        onChange={(e) => setSelectedEthnicGroup(e.target.value)}
+        className="appearance-none px-4 py-2 pr-10 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none cursor-pointer"
+      >
+        <option value="all">Все народы</option>
+        {peoples.map(people => (
+          <option key={people.id} value={people.id}>
+            {people.name}
+          </option>
+        ))}
+      </select>
+      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
 
             {/* Поиск */}
             <div className="relative w-full md:w-auto">
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Ищите по названию, автору или хештегам..." 
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full md:w-80 px-4 py-2 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none placeholder-gray-500"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              {searchQuery && (
-                <div className="absolute top-full left-0 right-0 mt-1 text-sm text-gray-500">
-                  Найдено {filteredPosts.length} из {posts.length} постов
-                </div>
-              )}
-            </div>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <FontAwesomeIcon icon={faMagnifyingGlass} className="text-gray-400" />
+    </div>
+    <input 
+      type="text" 
+      placeholder="Ищите по названию, автору или хештегам..." 
+      value={searchQuery}
+      onChange={handleSearchChange}
+      className="w-full md:w-80 pl-10 pr-4 py-2 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none placeholder-gray-500"
+    />
+    {searchQuery && (
+      <button
+        onClick={handleClearSearch}
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+      >
+        ✕
+      </button>
+    )}
+  </div>
+  {searchQuery && (
+    <div className="absolute top-full left-0 right-0 mt-1 text-sm text-gray-500">
+      Найдено {filteredPosts.length} из {posts.length} постов
+    </div>
+  )}
+</div>
 
             {/* Сортировка */}
             <div className="flex flex-col md:flex-row items-center gap-4">
@@ -339,7 +379,7 @@ export default function Forum() {
         {/* Сообщение если нет результатов поиска */}
         {searchQuery && filteredPosts.length === 0 && (
           <div className="text-center py-8 mb-8">
-            <div className="text-4xl mb-4">🔍</div>
+            <div className="text-4xl mb-4"><FontAwesomeIcon icon={faMagnifyingGlass} /></div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               Ничего не найдено
             </h3>
@@ -358,9 +398,9 @@ export default function Forum() {
         {/* Посты */}
         <div className="space-y-8">
           {sortedPosts.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+            <div key={post.id} className="bg-white px-4 md:px-6 lg:px-8 pt-4 md:pt-6 lg:pt-8 rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
               {/* Шапка поста */}
-              <div className="p-6 border-b border-gray-100">
+              <div className="mb-4 md:mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Link href={`/profile/${post.author.id}`}>
@@ -393,39 +433,52 @@ export default function Forum() {
 
               {/* Слайдер изображений */}
               {post.images.length > 0 && (
-                <div className="relative">
-                  <Swiper
-                    modules={[Navigation, Pagination, Autoplay]}
-                    navigation
-                    pagination={{ clickable: true }}
-                    autoplay={{ delay: 5000, disableOnInteraction: false }}
-                    loop={post.images.length > 1}
-                    className="h-80"
-                  >
-                    {post.images.map((image, index) => (
-                      <SwiperSlide key={index}>
-                        <div 
-                          className="relative h-full w-full cursor-pointer"
-                          onClick={() => setSelectedImage(image)}
-                        >
-                          <img
-                            src={image}
-                            alt={`Изображение ${index + 1} к посту "${post.title}"`}
-                            className="h-full w-full object-cover"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
-                            <div className="text-white">
-                              <p className="text-sm opacity-90">
-                                Изображение {index + 1} из {post.images.length}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                </div>
-              )}
+  <div className="relative">
+    <Swiper
+      modules={[Navigation, Pagination, Autoplay]}
+      navigation
+      pagination={{ clickable: true }}
+      autoplay={autoplayStates.get(post.id) !== false ? { delay: 5000, disableOnInteraction: false } : false}
+      loop={post.images.length > 1}
+      className="h-125 rounded-xl overflow-hidden"
+      onSlideChange={() => handleSlideChange(post.id)}
+    >
+      {post.images.map((mediaUrl, index) => (
+        <SwiperSlide key={index}>
+          <div 
+            className="relative h-full w-full cursor-pointer"
+            onClick={() => setSelectedImage(mediaUrl)}
+          >
+            {isVideoFile(mediaUrl) ? (
+              <video
+                src={mediaUrl}
+                controls
+                className="h-full w-full object-contain bg-black"
+                onClick={(e) => e.stopPropagation()}
+                onPlay={() => handleVideoPlay(post.id, true)}
+                onPause={() => handleVideoPlay(post.id, false)}
+                onEnded={() => handleVideoEnded(post.id)}
+              />
+            ) : (
+              <img
+                src={mediaUrl}
+                alt={`Медиа ${index + 1} к посту "${post.title}"`}
+                className="h-full w-full object-cover"
+              />
+            )}
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
+              <div className="text-white">
+                <p className="text-sm opacity-90">
+                  {isVideoFile(mediaUrl) ? '🎬 Видео' : '📷 Изображение'} {index + 1} из {post.images.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </SwiperSlide>
+      ))}
+    </Swiper>
+  </div>
+)}
 
               {/* Увеличенное изображение */}
               {selectedImage && (
@@ -490,7 +543,7 @@ export default function Forum() {
                       onClick={() => handleCopyLink(post.id)}
                     >
                       <img src="/images/link.svg" alt="Ссылка" className="aspect-square w-6" />
-                      <span className="font-medium">Копировать ссылку</span>
+                      <span className="font-medium">Ссылка</span>
                     </button>
                   </div>
                   
@@ -498,7 +551,7 @@ export default function Forum() {
                     href={`/posts/${post.id}`}
                     className="text-[#FF7340] hover:text-[#FF4500] font-medium flex items-center gap-2"
                   >
-                    Читать далее <img src="/images/arrow.svg" alt="Стрелка" className="aspect-square w-6" />
+                    Далее <img src="/images/arrow.svg" alt="Стрелка" className="aspect-square w-6" />
                   </Link>
                 </div>
               </div>

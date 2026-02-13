@@ -1,10 +1,11 @@
 'use server';
 
-import { prisma } from '../prisma';
 import { hash, compare } from 'bcryptjs';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth';
 import { revalidatePath } from 'next/cache';
+import transporter from '../nodemailer';
+import { prisma } from '../prisma';
 
 export type RegisterData = {
   firstName: string;
@@ -43,7 +44,58 @@ export type UserWithRelations = User & {
   };
 };
 
-export async function createUser(data: RegisterData) {
+export async function sendVerificationCode(email: string, code: string) {
+  try {
+    const mailOptions = {
+      from: `"Сокровища Народов" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: 'Код подтверждения регистрации',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #FF7340; font-size: 28px; margin: 0;">Сокровища Народов</h1>
+            <p style="color: #666; font-size: 16px;">Подтверждение email адреса</p>
+          </div>
+          
+          <div style="background-color: #f9f9f9; padding: 30px; border-radius: 8px; text-align: center;">
+            <h2 style="color: #333; font-size: 20px; margin-bottom: 20px;">
+              Ваш код подтверждения
+            </h2>
+            
+            <div style="background: linear-gradient(135deg, #FF7340, #FF8A5C); padding: 20px; border-radius: 8px;">
+              <span style="font-size: 30px; font-weight: bold; letter-spacing: 8px; color: white;">
+                ${code}
+              </span>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; margin-top: 30px;">
+              Код действителен в течение 15 минут.
+            </p>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; text-align: center;">
+            <p>Если вы не запрашивали этот код, просто проигнорируйте это письмо.</p>
+          </div>
+        </div>
+      `,
+      text: `Ваш код подтверждения: ${code}\nКод действителен в течение 15 минут.`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Код подтверждения отправлен:', info.messageId);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Ошибка отправки кода:', error);
+    return { 
+      error: 'Не удалось отправить код подтверждения. Попробуйте позже.' 
+    };
+  }
+}
+
+export async function createUser(
+  data: RegisterData
+) {
   try {
     const errors: string[] = [];
 
@@ -75,6 +127,7 @@ export async function createUser(data: RegisterData) {
       return { error: 'Возраст должен быть от 6 до 120 лет' };
     }
 
+    // Проверка существующего пользователя
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email }
     });
@@ -83,6 +136,7 @@ export async function createUser(data: RegisterData) {
       return { error: 'Пользователь с таким email уже существует' };
     }
 
+    // Создаем пользователя
     const hashedPassword = await hash(data.password, 12);
 
     const user = await prisma.user.create({
@@ -102,7 +156,7 @@ export async function createUser(data: RegisterData) {
     return {
       success: true,
       user: userWithoutPassword,
-      message: 'Регистрация успешна! Теперь вы можете войти в аккаунт.'
+      message: 'Регистрация успешна!'
     };
 
   } catch (error: any) {

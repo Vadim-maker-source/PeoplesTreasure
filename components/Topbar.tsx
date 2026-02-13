@@ -99,6 +99,7 @@ const Topbar = () => {
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/forum">Форум</Link></p>
           <p className="hover:underline hover:decoration-[#FFB840]"><Link href="/event">События</Link></p>
           {user?.id === '1' && (
+            <p className="hover:underline hover:decoration-[#FFB840]">
     <Link href="/admin/support" className="relative">
         Поддержка (админ)
         {Number(user?.unreadSupportCount) > 0 && (
@@ -107,8 +108,10 @@ const Topbar = () => {
             </span>
         )}
     </Link>
+    </p>
 )}
 
+<p className="hover:underline hover:decoration-[#FFB840]">
 <Link href="/my-support" className="relative">
     Мои обращения
     {Number(user?.unreadSupportCount) > 0 && (
@@ -117,6 +120,7 @@ const Topbar = () => {
         </span>
     )}
 </Link>
+</p>
         </div>
 
         <div className="md:hidden">

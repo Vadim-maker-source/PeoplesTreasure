@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "../prisma";
 import { getCurrentUser } from "./user";
-import { uploadImage } from "./post";
+import { uploadFile } from "./post";
 
 export type PostWithAuthor = {
   id: string;
@@ -34,6 +34,7 @@ type UpdatePostData = {
   ethnicGroupId: string | null
   existingImages: string[]
   newImages: File[]
+  newVideos: File[]
 }
 
 export async function getAllPosts(
@@ -537,11 +538,18 @@ export async function updatePost(postId: string, data: UpdatePostData) {
     if (!post) throw new Error('Пост не найден')
     if (post.authorId !== user.id) throw new Error('Это не ваш пост')
 
-    const uploadedImages: string[] = []
+    const uploadedMedia: string[] = []
 
+    // Загрузка новых изображений
     for (const file of data.newImages) {
-      const url = await uploadImage(file)
-      uploadedImages.push(String(url?.url))
+      const url = await uploadFile(file)
+      uploadedMedia.push(String(url?.url))
+    }
+
+    // Загрузка новых видео
+    for (const file of data.newVideos) {
+      const url = await uploadFile(file)
+      uploadedMedia.push(String(url?.url))
     }
 
     const updatedPost = await prisma.post.update({
@@ -551,7 +559,7 @@ export async function updatePost(postId: string, data: UpdatePostData) {
         content: data.content,
         tags: data.tags,
         ethnicGroupId: data.ethnicGroupId,
-        images: [...data.existingImages, ...uploadedImages]
+        images: [...data.existingImages, ...uploadedMedia]
       }
     })
 

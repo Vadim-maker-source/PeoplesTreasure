@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { peoples } from '@/app/lib/peoples';
 import { createComment, deleteComment, deletePost, getPostById, toggleLike, updateComment, updatePost } from '@/app/lib/api/posts';
 import { AlertTriangle, ChevronLeft, Edit, Loader2, MoreVertical, Save, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCurrentUser, User } from '@/app/lib/api/user';
 import Image from 'next/image';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 
 type Comment = {
   id: string;
@@ -38,6 +38,7 @@ export default function PostPage() {
   const [editText, setEditText] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(true);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -46,6 +47,7 @@ export default function PostPage() {
   const [showPostActions, setShowPostActions] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>([])
   const [newImages, setNewImages] = useState<File[]>([])
+  const [newVideos, setNewVideos] = useState<File[]>([])
   const [updateForm, setUpdateForm] = useState({
     title: '',
     content: '',
@@ -185,6 +187,10 @@ export default function PostPage() {
     setNewImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const removeNewVideo = (index: number) => {
+    setNewVideos(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
   
@@ -196,6 +202,30 @@ export default function PostPage() {
     }
   
     setNewImages(prev => [...prev, ...files])
+  }
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+  
+    const files = Array.from(e.target.files)
+    
+    // Фильтруем только видео
+    const videoFiles = files.filter(file => file.type.startsWith('video/'))
+  
+    if (newVideos.length + videoFiles.length > 5) { // Лимит 5 видео
+      toast.error('Максимум 5 видео')
+      return
+    }
+  
+    // Проверка размера видео (50MB)
+    for (const video of videoFiles) {
+      if (video.size > 500 * 1024 * 1024) {
+        toast.error(`Видео "${video.name}" превышает лимит 50MB`)
+        return
+      }
+    }
+  
+    setNewVideos(prev => [...prev, ...videoFiles])
   }
 
   const handleEditPost = async (e: React.FormEvent) => {
@@ -211,7 +241,8 @@ export default function PostPage() {
         tags: updateForm.tags.split(',').map(t => t.trim()),
         ethnicGroupId: updateForm.ethnicGroupId || null,
         existingImages,
-        newImages
+        newImages,
+        newVideos // Добавляем видео
       })
   
       if (result.success) {
@@ -382,6 +413,11 @@ export default function PostPage() {
       }
     }
   }
+
+  const isVideoFile = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
 
   if (isLoading) {
     return (
@@ -556,36 +592,54 @@ export default function PostPage() {
 
             {/* Слайдер изображений */}
             {post.images.length > 0 && (
-              <div className="mb-8">
-                <Swiper
-                  modules={[Navigation, Pagination, Autoplay]}
-                  navigation
-                  pagination={{ clickable: true }}
-                  autoplay={{ delay: 5000, disableOnInteraction: false }}
-                  loop={post.images.length > 1}
-                  className="h-125 rounded-xl overflow-hidden"
-                >
-                  {post.images.map((image: string, index: number) => (
-                    <SwiperSlide key={index}>
-                      <div className="relative h-full w-full">
-                        <img
-                          src={image}
-                          alt={`Изображение ${index + 1} к посту "${post.title}"`}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
-                          <div className="text-white">
-                            <p className="text-sm opacity-90">
-                              Изображение {index + 1} из {post.images.length}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
+  <div className="mb-8">
+    <Swiper
+      modules={[Navigation, Pagination, Autoplay]}
+      navigation
+      pagination={{ clickable: true }}
+      autoplay={autoplayEnabled ? { delay: 5000, disableOnInteraction: false } : false}
+      loop={post.images.length > 1}
+      className="h-125 rounded-xl overflow-hidden"
+      onSlideChange={() => {
+        // При смене слайда включаем автоплей обратно
+        setAutoplayEnabled(true);
+      }}
+    >
+      {post.images.map((mediaUrl: string, index: number) => (
+        <SwiperSlide key={index}>
+          <div className="relative h-full w-full">
+            {isVideoFile(mediaUrl) ? (
+              <video
+                src={mediaUrl}
+                controls
+                className="h-full w-full object-contain bg-black"
+                onPlay={() => setAutoplayEnabled(false)}
+                onPause={() => {
+                  // Можно оставить автоплей выключенным или включить через некоторое время
+                  // Сейчас оставим выключенным до смены слайда
+                }}
+                onEnded={() => setAutoplayEnabled(true)}
+              />
+            ) : (
+              <img
+                src={mediaUrl}
+                alt={`Медиа ${index + 1} к посту "${post.title}"`}
+                className="h-full w-full object-cover"
+              />
             )}
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-4">
+              <div className="text-white">
+                <p className="text-sm opacity-90">
+                  {isVideoFile(mediaUrl) ? '🎬 Видео' : '📷 Изображение'} {index + 1} из {post.images.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </SwiperSlide>
+      ))}
+    </Swiper>
+  </div>
+)}
 
             {/* Контент поста */}
             <div className="mb-4 md:mb-6">
@@ -883,48 +937,160 @@ export default function PostPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-lg font-semibold text-gray-800 mb-3">
-                  Изображения
-                </label>
-                
-                <div className="mb-4">
-                  <label className="block">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                      id="image-upload"
-                      disabled={isLoading || existingImages.length >= 10}
-                    />
-                    <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200">
-                      <span className="text-3xl mb-2">📷</span>
-                      <span className="text-gray-600 font-medium">
-                        {existingImages.length >= 10 ? 'Достигнут лимит 10 изображений' : 'Нажмите для загрузки изображений'}
-                      </span>
-                      <span className="text-sm text-gray-500 mt-1">
-                        До {10 - existingImages.length} изображений, макс. 5MB каждое
-                      </span>
-                    </div>
-                  </label>
-                </div>
-                
-                {/* Список загруженных изображений */}
-                {existingImages.map((img, i) => (
-                  <div key={i} className="relative">
-                    <img src={img} />
-                    <button type="button" onClick={() => removeExistingImage(i)}>×</button>
-                  </div>
-                ))}
-                {newImages.map((file, i) => (
-                  <div key={i} className="relative">
-                    <img src={URL.createObjectURL(file)} />
-                    <button type="button" onClick={() => removeNewImage(i)}>×</button>
-                  </div>
-                ))}
-              </div>
+              <div className="mb-6">
+  <label className="block text-lg font-semibold text-gray-800 mb-3">
+    Изображения
+  </label>
+  
+  <div className="mb-4">
+    <label className="block">
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleImageChange}
+        className="hidden"
+        id="image-upload"
+        disabled={isEditing || existingImages.length + newImages.length >= 10}
+      />
+      <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200">
+        <span className="text-3xl mb-2">📷</span>
+        <span className="text-gray-600 font-medium">
+          {existingImages.length + newImages.length >= 10 
+            ? 'Достигнут лимит 10 изображений' 
+            : 'Нажмите для загрузки изображений'}
+        </span>
+        <span className="text-sm text-gray-500 mt-1">
+          До {10 - (existingImages.length + newImages.length)} изображений, макс. 5MB каждое
+        </span>
+      </div>
+    </label>
+  </div>
+  
+  {/* Список существующих изображений */}
+  {existingImages.filter(url => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+  }).map((img, i) => (
+    <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
+      <img src={img} alt={`Изображение ${i + 1}`} className="w-full h-32 object-cover" />
+      <button
+        type="button"
+        onClick={() => removeExistingImage(
+          existingImages.findIndex(existing => existing === img)
+        )}
+        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition duration-200 hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+  
+  {/* Список новых изображений */}
+  {newImages.map((file, i) => (
+    <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
+      <img 
+        src={URL.createObjectURL(file)} 
+        alt={`Новое изображение ${i + 1}`} 
+        className="w-full h-32 object-cover" 
+      />
+      <div className="p-2 bg-white">
+        <p className="text-sm text-gray-600 truncate" title={file.name}>
+          {file.name}
+        </p>
+        <p className="text-xs text-gray-500">
+          {(file.size / 1024 / 1024).toFixed(2)} MB
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => removeNewImage(i)}
+        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition duration-200 hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+</div>
+
+              <div className="mb-6">
+  <label className="block text-lg font-semibold text-gray-800 mb-3">
+    Видео
+  </label>
+  
+  <div className="mb-4">
+    <label className="block">
+      <input
+        type="file"
+        multiple
+        accept="video/*"
+        onChange={handleVideoChange}
+        className="hidden"
+        id="video-upload"
+        disabled={isEditing || newVideos.length >= 5}
+      />
+      <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200">
+        <span className="text-3xl mb-2">🎬</span>
+        <span className="text-gray-600 font-medium">
+          {newVideos.length >= 5 ? 'Достигнут лимит 5 видео' : 'Нажмите для загрузки видео'}
+        </span>
+        <span className="text-sm text-gray-500 mt-1">
+          До {5 - newVideos.length} видео, макс. 50MB каждое
+        </span>
+      </div>
+    </label>
+  </div>
+  
+  {/* Список существующих видео */}
+  {existingImages.filter(url => {
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  }).map((url, i) => (
+    <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
+      <div className="aspect-video bg-gray-800 flex items-center justify-center">
+        <span className="text-white text-4xl">🎬</span>
+      </div>
+      <div className="p-2 bg-white">
+        <p className="text-sm text-gray-600 truncate">
+          Видео {i + 1}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => removeExistingImage(
+          existingImages.findIndex(img => img === url)
+        )}
+        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition duration-200 hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+  
+  {/* Список новых видео */}
+  {newVideos.map((file, i) => (
+    <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
+      <div className="aspect-video bg-gray-800 flex items-center justify-center">
+        <span className="text-white text-4xl">🎬</span>
+      </div>
+      <div className="p-2 bg-white">
+        <p className="text-sm text-gray-600 truncate" title={file.name}>
+          {file.name}
+        </p>
+        <p className="text-xs text-gray-500">
+          {(file.size / 1024 / 1024).toFixed(2)} MB
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => removeNewVideo(i)}
+        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition duration-200 hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+</div>
             </div>
             
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
