@@ -504,7 +504,7 @@ export default function Forum() {
               )}
 
               {/* Контент поста */}
-              <div className="p-6">
+              <div>
                 <p className="text-gray-700 mb-6 line-clamp-3">
                   {post.content}
                 </p>
