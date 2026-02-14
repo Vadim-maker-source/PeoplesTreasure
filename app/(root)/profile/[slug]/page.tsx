@@ -472,7 +472,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{user.email}</p>
+                  <p className="font-medium dark:text-black">{user.email}</p>
                 </div>
               </div>
               
@@ -482,7 +482,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Телефон</p>
-                  <p className="font-medium">{user.phone}</p>
+                  <p className="font-medium dark:text-black">{user.phone}</p>
                 </div>
               </div>
               
@@ -492,7 +492,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Возраст</p>
-                  <p className="font-medium">{user.age} лет</p>
+                  <p className="font-medium dark:text-black">{user.age} лет</p>
                 </div>
               </div>
               
@@ -503,7 +503,7 @@ export default function Profile() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Регион</p>
-                    <p className="font-medium">{user.region}</p>
+                    <p className="font-medium dark:text-black">{user.region}</p>
                   </div>
                 </div>
               )}

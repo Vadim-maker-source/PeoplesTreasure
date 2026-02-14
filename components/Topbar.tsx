@@ -143,7 +143,7 @@ const Topbar = () => {
           </NavLink>
         </div>
 
-        <ToggleSwitch size="lg" />
+        <ToggleSwitch size="lg" className="hidden md:block" />
 
         <div className="md:hidden">
           <button

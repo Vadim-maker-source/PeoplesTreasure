@@ -256,7 +256,7 @@ export default function Forum() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF9F9] py-12">
+      <div className="min-h-screen py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-2 text-xl">
             <Loader2 className="animate-spin text-[#FF7340]" />

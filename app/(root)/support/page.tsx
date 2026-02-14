@@ -123,20 +123,20 @@ const Support = () => {
                 </div>
                 
                 {/* Форма создания обращения */}
-                <div className="bg-white/40 rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                     <div className="p-8">
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                                 Новое обращение
                             </h2>
-                            <p className="text-gray-600">
+                            <p className="text-gray-600 dark:text-gray-200">
                                 Заполните форму ниже, и наша команда поддержки свяжется с вами в ближайшее время
                             </p>
                         </div>
 
                         {!user ? (
                             <div className="text-center py-8">
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-gray-600 dark:text-gray-200 mb-4">
                                     Для обращения в поддержку необходимо авторизоваться
                                 </p>
                                 <Link href="/sign-in">
@@ -148,7 +148,7 @@ const Support = () => {
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                                         Тема обращения *
                                     </label>
                                     <input
@@ -157,13 +157,13 @@ const Support = () => {
                                         value={formData.subject}
                                         onChange={handleChange}
                                         required
-                                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200"
                                         placeholder="Опишите кратко вашу проблему"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                                         Ваше сообщение *
                                     </label>
                                     <textarea
@@ -172,13 +172,13 @@ const Support = () => {
                                         onChange={handleChange}
                                         required
                                         rows={6}
-                                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none"
                                         placeholder="Опишите вашу проблему или вопрос подробно..."
                                     />
                                 </div>
 
                                 <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-gray-500 dark:text-gray-200">
                                         <p>Поля, отмеченные *, обязательны для заполнения</p>
                                         <p className="mt-1">
                                             Мы ответим вам в течение 24 часов в рабочее время
@@ -188,7 +188,7 @@ const Support = () => {
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="bg-linear-to-r from-[#FF7340] to-[#FF4500] hover:opacity-80 text-white font-semibold py-3 px-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                        className="bg-linear-to-r from-[#FF7340] to-[#FF4500] hover:opacity-80 text-white font-semibold py-3 px-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all duration-200"
                                     >
                                         {isSubmitting ? (
                                             <span className="flex items-center gap-2">
@@ -211,44 +211,44 @@ const Support = () => {
                                 Другие способы связи
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-10 h-10 rounded-full bg-[#FF7340]/10 flex items-center justify-center">
                                             <span className="text-[#FF7340] font-bold">📧</span>
                                         </div>
-                                        <h4 className="font-medium text-gray-900">Email</h4>
+                                        <h4 className="font-medium text-gray-900 dark:text-white">Email</h4>
                                     </div>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-600 dark:text-gray-300">
                                         Vadimbureev380@yandex.ru
                                     </p>
                                 </div>
 
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-10 h-10 rounded-full bg-[#FF7340]/10 flex items-center justify-center">
                                             <span className="text-[#FF7340] font-bold">📞</span>
                                         </div>
-                                        <h4 className="font-medium text-gray-900">Телефон</h4>
+                                        <h4 className="font-medium text-gray-900 dark:text-white">Телефон</h4>
                                     </div>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-600 dark:text-gray-300">
                                         +7 (920) 545-08-62
                                     </p>
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">
                                         Пн-Пт с 9:00 до 18:00
                                     </p>
                                 </div>
 
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-10 h-10 rounded-full bg-[#FF7340]/10 flex items-center justify-center">
                                             <span className="text-[#FF7340] font-bold">🕒</span>
                                         </div>
-                                        <h4 className="font-medium text-gray-900">Время ответа</h4>
+                                        <h4 className="font-medium text-gray-900 dark:text-white">Время ответа</h4>
                                     </div>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-600 dark:text-gray-300">
                                         В течение 24 часов
                                     </p>
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">
                                         В рабочие дни
                                     </p>
                                 </div>
