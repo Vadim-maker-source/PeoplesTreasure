@@ -111,19 +111,19 @@ const Support = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FFF9F9] py-12">
+        <div className="min-h-screen py-12">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                         Служба поддержки
                     </h1>
-                    <p className="text-lg text-gray-600">
+                    <p className="text-lg text-gray-600 dark:text-gray-200">
                         Свяжитесь с нами, и мы обязательно вам поможем
                     </p>
                 </div>
                 
                 {/* Форма создания обращения */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                <div className="bg-white/40 rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                     <div className="p-8">
                         <div className="mb-8">
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">

@@ -131,7 +131,7 @@ const Events = () => {
 
     return (
     <div className="w-full mt-8">
-        <h1 className="text-3xl text-black font-semibold text-center mt-8">События и праздники</h1>
+        <h1 className="text-3xl font-semibold text-center mt-8">События и праздники</h1>
         <div className="w-full mt-8 mb-8">
                 <div className="w-full h-4 bg-[#FFA100]"></div>
                 <div className="w-full h-4 bg-[#FF7C00]"></div>
@@ -142,12 +142,12 @@ const Events = () => {
                 <div className='w-full' key={item.id}>
                 <div className="w-full flex flex-col gap-5">
                     <div className="">
-                        <h1 className='font-semibold text-2xl text-center'>{item.name}</h1>
+                        <h1 className='font-semibold text-3xl text-center'>{item.name}</h1>
                     </div>
 
                     <div className="w-full flex flex-col gap-5">
                         {renderSlider(item.eventPhoto, item)}
-                        <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
+                        <div className="px-3 py-2 bg-[#FFF0F0] text-black md:w-[60%] w-full rounded-lg">
                         <p className="text-lg">{item.eventDescription[item.currentSlide]}</p>
                     </div>
                     <Link href={item.learnMore[item.currentSlide]} target="_blank" className="px-12 py-4 md:w-64  rounded-full text-center bg-[#FFB840] text-black md:text-lg text-md hover:bg-[#FFCB73] cursor-pointer duration-200">Узнать больше</Link>

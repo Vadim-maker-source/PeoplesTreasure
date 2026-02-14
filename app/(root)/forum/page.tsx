@@ -268,7 +268,7 @@ export default function Forum() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9F9]">
+    <div className="min-h-screen">
       {/* Панель фильтров и сортировки */}
       <div className="sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -518,7 +518,7 @@ export default function Forum() {
                 </div>
 
                 {/* Кнопки взаимодействия */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between py-4 border-t border-gray-100">
                   <div className="flex items-center gap-6">
                     <button
                       onClick={() => handleToggleLike(post.id)}

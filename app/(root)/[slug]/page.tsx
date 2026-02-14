@@ -190,7 +190,7 @@ const PeoplePage = () => {
         return (
             <ul className="list-disc pl-5 mt-2 space-y-1">
                 {items.map((item, index) => (
-                    <li key={index} className="text-lg">{item}</li>
+                    <li key={index} className="text-lg text-black">{item}</li>
                 ))}
             </ul>
         );
@@ -228,7 +228,7 @@ const PeoplePage = () => {
 
     return (
         <div className="w-full mt-8">
-            <h1 className="text-3xl text-black font-semibold text-center mt-8">{people.name}</h1>
+            <h1 className="text-3xl text-black dark:text-white font-semibold text-center mt-8">{people.name}</h1>
             
             <div className="w-full mt-8 mb-8">
                 <div className="w-full h-4 bg-[#FFA100]"></div>
@@ -248,46 +248,46 @@ const PeoplePage = () => {
 
             <div className="flex flex-col md:px-15 px-5 gap-10 pb-15">
                 <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full break-all rounded-lg">
-                    <p className="text-lg">{people.description}</p>
+                    <p className="text-lg text-black">{people.description}</p>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/peopleGroup.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Численность</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Численность</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
-                        <p className="text-lg">{formatPopulation(people.population)} человек</p>
+                        <p className="text-lg text-black">{formatPopulation(people.population)} человек</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/langFamily.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Языковая семья</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Языковая семья</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
-                        <p className="text-lg">{people.languageFamily}</p>
+                        <p className="text-lg text-black">{people.languageFamily}</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/reg.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Регион проживания</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Регион проживания</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
-                        <p className="text-lg">{people.region}</p>
+                        <p className="text-lg text-black">{people.region}</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/traditions.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Традиции</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Традиции</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
@@ -296,7 +296,7 @@ const PeoplePage = () => {
                                 {renderList(people.traditions)}
                             </>
                         ) : (
-                            <p className="text-lg">Информация о традициях отсутствует</p>
+                            <p className="text-lg text-black">Информация о традициях отсутствует</p>
                         )}
                     </div>
                 </div>
@@ -304,14 +304,14 @@ const PeoplePage = () => {
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/food.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Еда</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Еда</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.food && people.food.length > 0 ? (
                             renderList(people.food)
                         ) : (
-                            <p className="text-lg">Информация о еде отсутствует</p>
+                            <p className="text-lg text-black">Информация о еде отсутствует</p>
                         )}
                     </div>
 
@@ -323,14 +323,14 @@ const PeoplePage = () => {
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/suite.png" alt="" className="w-3" />
-                        <h1 className="text-3xl text-black font-semibold">Костюм</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Костюм</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.suit && people.suit.length > 0 ? (
                             renderList(people.suit)
                         ) : (
-                            <p className="text-lg">Информация о костюмах отсутствует</p>
+                            <p className="text-lg text-black">Информация о костюмах отсутствует</p>
                         )}
                     </div>
 
@@ -342,14 +342,14 @@ const PeoplePage = () => {
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/guitar.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Фольклор</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Фольклор</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.folklor && people.folklor.length > 0 ? (
                             renderList(people.folklor)
                         ) : (
-                            <p className="text-lg">Информация о фольклоре отсутствует</p>
+                            <p className="text-lg text-black">Информация о фольклоре отсутствует</p>
                         )}
                     </div>
                 </div>
@@ -358,11 +358,11 @@ const PeoplePage = () => {
                     <div className="flex flex-col gap-10">
                         <div className="flex items-center gap-2">
                             <img src="/images/language.png" alt="" className="w-8" />
-                            <h1 className="text-3xl text-black font-semibold">Язык</h1>
+                            <h1 className="text-3xl text-black dark:text-white font-semibold">Язык</h1>
                         </div>
 
                         <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
-                            <p className="text-lg">{people.language}</p>
+                            <p className="text-lg text-black">{people.language}</p>
                         </div>
                     </div>
                 )}
@@ -370,25 +370,25 @@ const PeoplePage = () => {
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/globus.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Происхождение</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Происхождение</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
-                        <p className="text-lg">{people.prois}</p>
+                        <p className="text-lg text-black">{people.prois}</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center gap-2">
                         <img src="/images/hist.png" alt="" className="w-8" />
-                        <h1 className="text-3xl text-black font-semibold">Исторические события</h1>
+                        <h1 className="text-3xl text-black dark:text-white font-semibold">Исторические события</h1>
                     </div>
 
                     <div className="px-3 py-2 bg-[#FFF0F0] md:w-[60%] w-full rounded-lg">
                         {people.historyEvents && people.historyEvents.length > 0 ? (
                             renderList(people.historyEvents)
                         ) : (
-                            <p className="text-lg">Информация об исторических событиях отсутствует</p>
+                            <p className="text-lg text-black">Информация об исторических событиях отсутствует</p>
                         )}
                     </div>
                 </div>

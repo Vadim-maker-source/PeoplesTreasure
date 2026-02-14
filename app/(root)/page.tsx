@@ -1,12 +1,15 @@
+'use client'
+
 import Link from 'next/link'
 import React from 'react'
 
 const Home = () => {
+
   return (
     <div className="w-full h-full scroll-smooth overflow-hidden">
       <div className="w-full h-full">
 
-            <img src="/images/main-bg2.png" alt="" className="w-full" />
+            <img src="/images/main-bg-white.png" alt="" className="w-full hidden dark:block" /> <img src="/images/main-bg2.png" alt="" className="w-full block dark:hidden" />
             <div className="button-go">
               <a href="#narodi"><button className="lg:px-12 lg:py-4 lg:w-64 md:px-8 md:py-2 py-1 md:w-32 w-24 text-center rounded-full bg-[#FFB840] text-black lg:text-lg md:text-md text-sm cursor-pointer hover:opacity-80 duration-200">Поехали!</button></a>
             </div>
@@ -14,7 +17,7 @@ const Home = () => {
       </div>
 
       <div className="w-full" id='narodi'>
-        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] flex lg:flex-row flex-col items-center justify-between gap-10">
+        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] dark:bg-gray-900 flex lg:flex-row flex-col items-center justify-between gap-10">
           <img src="/images/home/kavkaz.png" alt="" className="rounded-3xl" />
           <div className="flex flex-col gap-16 items-start justify-end w-full">
             <div className="flex flex-col items-start w-full gap-6">
@@ -29,7 +32,7 @@ const Home = () => {
           <img src="/images/railway.png" alt="" />
         </div>
 
-        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] flex lg:flex-row flex-col items-center justify-between gap-10">
+        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] dark:bg-gray-900 flex lg:flex-row flex-col items-center justify-between gap-10">
           <img src="/images/home/image 6.png" alt="" className="rounded-3xl" />
           <div className="flex flex-col gap-16 items-start justify-end w-full">
             <div className="flex flex-col items-start w-full gap-6">
@@ -44,7 +47,7 @@ const Home = () => {
           <img src="/images/railwayTrain.png" alt="" />
         </div>
 
-        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] flex lg:flex-row flex-col items-center justify-between gap-10">
+        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] dark:bg-gray-900 flex lg:flex-row flex-col items-center justify-between gap-10">
           <img src="/images/home/fin.png" alt="" className="rounded-3xl" />
           <div className="flex flex-col gap-16 items-start justify-end w-full">
             <div className="flex flex-col items-start w-full gap-6">
@@ -59,7 +62,7 @@ const Home = () => {
           <img src="/images/railway.png" alt="" />
         </div>
 
-        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] flex lg:flex-row flex-col items-center justify-between gap-10">
+        <div className="w-full px-[11%] py-10 bg-[#FFF0F0] dark:bg-gray-900 flex lg:flex-row flex-col items-center justify-between gap-10">
           <img src="/images/home/mong.png" alt="" className="rounded-3xl" />
           <div className="flex flex-col gap-16 items-start justify-end w-full">
             <div className="flex flex-col items-start w-full gap-6">
@@ -72,7 +75,7 @@ const Home = () => {
 
       </div>
 
-      <div className="w-full p-10 hidden xl:flex flex-col items-center justify-center bg-[#FFF0F0] mt-24 mb-10" id='map'>
+      <div className="w-full p-10 hidden xl:flex flex-col items-center justify-center bg-[#FFF0F0] dark:bg-gray-900 mt-24 mb-10" id='map'>
         <img src="/images/mapppN.png" className="w-[1331.2px]" />
         <div className="flex items-start">
         <div className="tatari flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold underline"><Link href="/Татары">Татары</Link></p></div>

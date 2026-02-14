@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import Image from 'next/image'
+import ToggleSwitch from '@/components/ToggleSwitch'
 
 type SafeUser = {
   id: string;
@@ -446,6 +447,7 @@ export default function Profile() {
               </div>
               
               {isOwnProfile && (
+                <>
                 <button
                   onClick={() => setIsEditModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-white text-[#FF7340] hover:bg-gray-100 rounded-lg font-medium transition-colors"
@@ -453,6 +455,10 @@ export default function Profile() {
                   <Edit size={18} />
                   Редактировать
                 </button>
+                <ToggleSwitch 
+                  size="lg" 
+                />
+                </>
               )}
             </div>
           </div>

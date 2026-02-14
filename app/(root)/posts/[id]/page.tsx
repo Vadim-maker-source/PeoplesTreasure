@@ -421,7 +421,7 @@ export default function PostPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF9F9] pt-24 pb-8 px-4">
+      <div className="min-h-screen pt-24 pb-8 px-4">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="animate-spin text-[#FF7340] mx-auto w-8 h-8 mb-4" />
@@ -434,7 +434,7 @@ export default function PostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#FFF9F9] pt-24 pb-8 px-4">
+      <div className="min-h-screen pt-24 pb-8 px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Пост не найден</h1>
           <p className="text-gray-600 mb-6">Запрашиваемый пост не существует или был удален</p>
@@ -450,7 +450,7 @@ export default function PostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9F9] pt-20">
+    <div className="min-h-screen pt-20">
       {/* Модальное окно редактирования комментария */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -500,7 +500,7 @@ export default function PostPage() {
       <div className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between md:hidden">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-200 cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="font-medium">Назад</span>
@@ -512,14 +512,14 @@ export default function PostPage() {
         {/* Кнопка назад для десктопа */}
         <button
           onClick={() => router.back()}
-          className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-4 cursor-pointer"
+          className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-200 mb-4 cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5" />
           <span>Назад</span>
         </button>
 
         {/* Шапка поста */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 mb-6">
           <div className="p-4 md:p-6 lg:p-8">
             {/* Заголовок и автор */}
             <div className="flex flex-col mb-4 md:mb-6">
@@ -529,12 +529,12 @@ export default function PostPage() {
                     {post.author.firstName[0]}{post.author.lastName[0]}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-gray-900 text-base md:text-lg truncate">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-base md:text-lg truncate">
                       {post.author.firstName} {post.author.lastName} {post.author.verified && (
                         <Image src="/images/verified.png" alt="" width={18} height={18} />
                       )}
                     </h3>
-                    <p className="text-xs md:text-sm text-gray-500">
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-200">
                       {formatDate(post.createdAt)}
                     </p>
                   </div>
@@ -546,7 +546,7 @@ export default function PostPage() {
                       onClick={() => setShowPostActions(!showPostActions)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer duration-200"
                     >
-                      <MoreVertical className="w-5 h-5 text-gray-600" />
+                      <MoreVertical className="w-5 h-5 text-gray-600 dark:text-white" />
                     </button>
                     
                     {showPostActions && (
@@ -586,7 +586,7 @@ export default function PostPage() {
             </div>
             
             {/* Заголовок поста */}
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 md:mb-4 wrap-break-word">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4 wrap-break-word">
               {post.title}
             </h1>
 
@@ -643,7 +643,7 @@ export default function PostPage() {
 
             {/* Контент поста */}
             <div className="mb-4 md:mb-6">
-              <div className="text-gray-700 text-sm md:text-base whitespace-pre-line wrap-break-word">
+              <div className="text-gray-700 dark:text-white text-sm md:text-base whitespace-pre-line wrap-break-word">
                 {post.content}
               </div>
             </div>
@@ -674,12 +674,12 @@ export default function PostPage() {
                       <img src="/images/like.svg" alt="Лайк" className="w-5 h-5 md:w-6 md:h-6" />
                     )}
                   </span>
-                  <span className="font-medium text-sm md:text-base">{post.likes}</span>
+                  <span className="font-medium text-sm md:text-base dark:text-white">{post.likes}</span>
                 </button>
                 
                 <button className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer">
                   <img src="/images/comments.svg" alt="Комментарии" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="font-medium text-sm md:text-base">{post.commentsCount}</span>
+                  <span className="font-medium text-sm md:text-base dark:text-white">{post.commentsCount}</span>
                 </button>
                 
                 <button 
@@ -687,8 +687,8 @@ export default function PostPage() {
                   onClick={handleCopyLink}
                 >
                   <img src="/images/link.svg" alt="Поделиться" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="hidden md:inline font-medium">Копировать ссылку</span>
-                  <span className="md:hidden font-medium text-sm">Ссылка</span>
+                  <span className="hidden md:inline font-medium dark:text-white">Копировать ссылку</span>
+                  <span className="md:hidden font-medium text-sm dark:text-white">Ссылка</span>
                 </button>
               </div>
               
@@ -709,15 +709,15 @@ export default function PostPage() {
         </div>
 
         {/* Форма добавления комментария */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 md:p-6 mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Добавить комментарий</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 md:p-6 mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">Добавить комментарий</h2>
           <form onSubmit={handleAddComment}>
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Напишите ваш комментарий..."
               rows={3}
-              className="w-full px-3 py-2 md:px-4 md:py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none mb-3 md:mb-4 text-sm md:text-base"
+              className="w-full px-3 py-2 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#FFB840] focus:ring-2 focus:ring-[#FFCB73] transition duration-200 resize-none mb-3 md:mb-4 text-sm md:text-base"
               required
             />
             <div className="flex justify-end">
@@ -731,7 +731,7 @@ export default function PostPage() {
             </div>
           </form>
 
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 mt-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6 mt-6">
             Комментарии ({post.commentsCount})
           </h2>
           
@@ -750,7 +750,7 @@ export default function PostPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1 mb-1">
-                          <h4 className="font-bold text-gray-900 text-sm md:text-base truncate">
+                          <h4 className="font-bold text-gray-900 dark:text-white text-sm md:text-base truncate">
                             {comment.author.firstName} {comment.author.lastName}
                           </h4>
                           <span className="text-xs md:text-sm text-gray-500">
@@ -758,7 +758,7 @@ export default function PostPage() {
                           </span>
                         </div>
                         <div className="mt-1">
-                          <p className="text-gray-700 text-sm md:text-base wrap-break-word whitespace-pre-wrap">
+                          <p className="text-gray-700 dark:text-gray-100 text-sm md:text-base wrap-break-word whitespace-pre-wrap">
                             {comment.content}
                           </p>
                         </div>
@@ -772,9 +772,9 @@ export default function PostPage() {
                           onClick={() => setShowCommentActions(
                             showCommentActions === comment.id ? null : comment.id
                           )}
-                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                          className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
-                          <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                          <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500 dark:text-gray-100" />
                         </button>
                         
                         {showCommentActions === comment.id && (
@@ -863,12 +863,12 @@ export default function PostPage() {
 
 {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-none">
           <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Редактировать профиль</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Редактировать пост</h2>
             <button
               onClick={() => setShowEditModal(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+              className="p-2 hover:bg-gray-100 text-black rounded-lg cursor-pointer"
             >
               <X size={24} />
             </button>
