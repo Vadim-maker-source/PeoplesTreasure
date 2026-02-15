@@ -21,6 +21,79 @@ const nunito = Nunito({
   variable: '--font-nunito',
 });
 
+// Структурированные данные для хлебных крошек (поисковые ссылки)
+const breadcrumbData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Главная",
+      "item": "https://peoples-treasure.vercel.app"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Народы",
+      "item": "https://peoples-treasure.vercel.app/peoples"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Карта",
+      "item": "https://peoples-treasure.vercel.app/map"
+    },
+    {
+      "@type": "ListItem",
+      "position": 4,
+      "name": "Тесты",
+      "item": "https://peoples-treasure.vercel.app/tests"
+    },
+    {
+      "@type": "ListItem",
+      "position": 5,
+      "name": "Форум",
+      "item": "https://peoples-treasure.vercel.app/forum"
+    }
+  ]
+};
+
+// Альтернативный вариант - SiteNavigationElement (более явный для меню)
+const navigationData = {
+  "@context": "https://schema.org",
+  "@type": "SiteNavigationElement",
+  "name": "Основное меню",
+  "description": "Навигация по основным разделам сайта",
+  "hasPart": [
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Главная",
+      "url": "https://peoples-treasure.vercel.app"
+    },
+    {
+      "@type": "SiteNavigationElement", 
+      "name": "Народы",
+      "url": "https://peoples-treasure.vercel.app/peoples"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Карта", 
+      "url": "https://peoples-treasure.vercel.app/map"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Тесты",
+      "url": "https://peoples-treasure.vercel.app/tests"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Форум",
+      "url": "https://peoples-treasure.vercel.app/forum"
+    }
+  ]
+};
+
 // Расширенные метаданные для SEO
 export const metadata: Metadata = {
   metadataBase: new URL('https://peoples-treasure.vercel.app'),
@@ -216,7 +289,7 @@ export default function RootLayout({
         {/* RSS Feed */}
         <link rel="alternate" type="application/rss+xml" title="Сокровища Народов - Новости" href="/rss.xml" />
         
-        {/* Yandex Verification (без ключа, просто мета-тег) */}
+        {/* Yandex Verification */}
         <meta name="yandex-verification" content="4e4ae6843d5ef552" />
         
         {/* Google Verification */}
@@ -232,6 +305,16 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
         />
         
+        {/* ДОБАВЛЕНО: Навигационные структурированные данные */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationData) }}
+        />
+        
         {/* Дополнительные мета-теги */}
         <meta name="geo.region" content="RU" />
         <meta name="geo.placename" content="Russia" />
@@ -241,7 +324,7 @@ export default function RootLayout({
         {/* Для поисковых систем */}
         <meta name="yandex" content="index, follow" />
         <meta name="google" content="index, follow" />
-        <meta name="revisit-after" content="7 days" />
+        <meta name="revisit-after" content="7 дней" />
         <meta name="document-state" content="dynamic" />
         <meta name="copyright" content="Сокровища Народов" />
         <meta name="author" content="Сокровища Народов" />

@@ -71,7 +71,7 @@ const Support = () => {
                     subject: '',
                     message: '',
                 });
-                loadUserTickets(); // Обновляем список обращений
+                loadUserTickets();
             } else {
                 if (result.isAuthError) {
                     toast.error(result.error || 'Необходима авторизация');
