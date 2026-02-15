@@ -293,7 +293,7 @@ export default function RootLayout({
         <meta name="yandex-verification" content="4e4ae6843d5ef552" />
         
         {/* Google Verification */}
-        <meta name="google-site-verification" content="ваш_код_можно_добавить_позже" />
+        <meta name="google-site-verification" content="google-site-verification=J4SWkvw8ahsz2ZJ0ZvvohanahGxLnQPEfT5RAa4S1No" />
         
         {/* Структурированные данные */}
         <script
