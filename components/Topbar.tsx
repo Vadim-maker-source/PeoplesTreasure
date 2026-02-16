@@ -8,12 +8,14 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import ToggleSwitch from './ToggleSwitch'
+import { getPendingPostsCount } from '@/app/lib/api/posts'
 
 const Topbar = () => {
   const [user, setUser] = useState<User | null>(null)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [pendingPostsCount, setPendingPostsCount] = useState(0) // Добавьте состояние
 
   const router = useRouter()
   
@@ -39,6 +41,16 @@ const Topbar = () => {
       const currentUser = await getCurrentUser()
       if(currentUser){
         setUser(currentUser)
+        
+        // Загружаем количество постов на модерации только для админа
+        if (currentUser.id === '1') {
+          try {
+            const count = await getPendingPostsCount()
+            setPendingPostsCount(count)
+          } catch (error) {
+            console.error('Ошибка загрузки количества постов на модерацию:', error)
+          }
+        }
       }
     }
 
@@ -141,6 +153,19 @@ const Topbar = () => {
               )}
             </span>
           </NavLink>
+
+          {user?.id === '1' && (
+            <NavLink href="/admin/moderate">
+              <span className="relative">
+                Модерация (админ)
+                {pendingPostsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#FF7340] text-white text-xs font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">
+                    {pendingPostsCount > 99 ? '99+' : pendingPostsCount}
+                  </span>
+                )}
+              </span>
+            </NavLink>
+          )}
         </div>
 
         <ToggleSwitch size="lg" className="hidden md:block" />
@@ -236,16 +261,29 @@ const Topbar = () => {
           </Link>
 
           {user?.id === '1' && (
-            <Link href="/admin/support" onClick={handleLinkClick}>
-              <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer relative">
-                Поддержка (админ)
-                {Number(user?.unreadSupportCount) > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                    {user.unreadSupportCount}
-                  </span>
-                )}
-              </div>
-            </Link>
+            <>
+              <Link href="/admin/support" onClick={handleLinkClick}>
+                <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer relative">
+                  Поддержка (админ)
+                  {Number(user?.unreadSupportCount) > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                      {user.unreadSupportCount}
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              <Link href="/admin/moderate" onClick={handleLinkClick}>
+                <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer relative">
+                  Модерация (админ)
+                  {pendingPostsCount > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-[#FF7340] text-white text-xs rounded-full">
+                      {pendingPostsCount > 99 ? '99+' : pendingPostsCount}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            </>
           )}
 
           <Link href="/my-support" onClick={handleLinkClick}>

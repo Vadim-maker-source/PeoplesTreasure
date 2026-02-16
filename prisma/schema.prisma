@@ -74,6 +74,7 @@ model Post {
   images       String[]
   tags         String[]
   likes        Int      @default(0)
+  status       String   @default("pending")
   
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments    Comment[]

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { peoples } from '@/app/lib/peoples';
-import { createPost } from '@/app/lib/api/post';
+import { createPost } from '@/app/lib/api/posts';
 
 type MediaFile = {
   file: File;
