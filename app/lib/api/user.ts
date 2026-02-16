@@ -6,6 +6,7 @@ import { authOptions } from '../auth';
 import { revalidatePath } from 'next/cache';
 import transporter from '../nodemailer';
 import { prisma } from '../prisma';
+import { uploadFile } from './post';
 
 export type RegisterData = {
   firstName: string;
@@ -413,5 +414,108 @@ export async function deleteAccount(password: string) {
   } catch (error) {
     console.error(error);
     return { error: 'Ошибка при удалении аккаунта' };
+  }
+}
+
+export async function updateAvatar(formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return { error: 'Не авторизован' };
+    }
+
+    const file = formData.get('avatar') as File;
+    
+    if (!file) {
+      return { error: 'Файл не выбран' };
+    }
+
+    if (!file.type.startsWith('image/')) {
+      return { error: 'Можно загружать только изображения' };
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return { error: 'Размер файла не должен превышать 5MB' };
+    }
+
+    const uploadedFile = await uploadFile(file);
+    
+    if (!uploadedFile?.url) {
+      return { error: 'Не удалось загрузить файл' };
+    }
+
+    // Обновляем аватар пользователя
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { avatar: uploadedFile.url },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        age: true,
+        phone: true,
+        role: true,
+        avatar: true,
+        region: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+
+    revalidatePath('/profile');
+    revalidatePath(`/profile/${session.user.id}`);
+    
+    return {
+      success: true,
+      user: updatedUser,
+      message: 'Аватар успешно обновлен'
+    };
+  } catch (error) {
+    console.error('Error updating avatar:', error);
+    return { error: 'Ошибка при обновлении аватара' };
+  }
+}
+
+export async function removeAvatar() {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return { error: 'Не авторизован' };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { avatar: null },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        age: true,
+        phone: true,
+        role: true,
+        avatar: true,
+        region: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+
+    revalidatePath('/profile');
+    revalidatePath(`/profile/${session.user.id}`);
+    
+    return {
+      success: true,
+      user: updatedUser,
+      message: 'Аватар удален'
+    };
+  } catch (error) {
+    console.error('Error removing avatar:', error);
+    return { error: 'Ошибка при удалении аватара' };
   }
 }

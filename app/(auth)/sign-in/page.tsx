@@ -4,16 +4,19 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [yandexLoading, setYandexLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +28,7 @@ function SignInForm() {
         email,
         password,
         redirect: false,
-        callbackUrl: searchParams.get('callbackUrl') || '/',
+        callbackUrl,
       });
 
       if (result?.error) {
@@ -35,7 +38,6 @@ function SignInForm() {
           setError(result.error);
         }
       } else if (result?.ok) {
-        const callbackUrl = searchParams.get('callbackUrl') || '/';
         router.push(callbackUrl);
         router.refresh();
       }
@@ -44,6 +46,17 @@ function SignInForm() {
       setError("Произошла ошибка при входе. Попробуйте позже.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleYandexSignIn = async () => {
+    setYandexLoading(true);
+    try {
+      await signIn("yandex", { callbackUrl });
+    } catch (error) {
+      console.error(error);
+      setError("Ошибка при входе через Яндекс");
+      setYandexLoading(false);
     }
   };
 
@@ -66,6 +79,34 @@ function SignInForm() {
           <p className="mt-2 text-sm text-gray-600">
             Добро пожаловать в сообщество "Сокровища Народов"
           </p>
+        </div>
+
+        {/* Кнопка входа через Яндекс */}
+        <button
+          onClick={handleYandexSignIn}
+          disabled={yandexLoading}
+          className="w-full flex items-center justify-center gap-1 px-4 py-2.5 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {yandexLoading ? (
+            <span className="flex items-center">
+              <Image src="/images/Yandex_icon.png" alt="Яндекс" width={30} height={30} />
+              Вход через Яндекс...
+            </span>
+          ) : (
+            <>
+              <Image src="/images/Yandex_icon.png" alt="Яндекс" width={30} height={30} />
+              Войти через Яндекс
+            </>
+          )}
+        </button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">или</span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -96,7 +137,7 @@ function SignInForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none relative block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
                   placeholder="example@mail.ru"
-                  disabled={loading}
+                  disabled={loading || yandexLoading}
                 />
               </div>
             </div>
@@ -120,13 +161,13 @@ function SignInForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none relative block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
                   placeholder="••••••••"
-                  disabled={loading}
+                  disabled={loading || yandexLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  disabled={loading}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                  disabled={loading || yandexLoading}
                 >
                   {showPassword ? (
                     <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -147,7 +188,7 @@ function SignInForm() {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || yandexLoading}
               className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#FF7340] hover:opacity-80 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

@@ -404,9 +404,11 @@ export default function Forum() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Link href={`/profile/${post.author.id}`}>
+                    {post.author.avatar ? <img src={post.author.avatar} alt="" className="w-12 h-12 rounded-full" /> :
                       <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
                         {post.author.firstName[0]}{post.author.lastName[0]}
                       </div>
+                    }
                     </Link>
                     <div>
                       <Link href={`/profile/${post.author.id}`}>
@@ -504,7 +506,7 @@ export default function Forum() {
               )}
 
               {/* Контент поста */}
-              <div>
+              <div className="pt-4">
                 <p className="text-gray-700 mb-6 line-clamp-3">
                   {post.content}
                 </p>

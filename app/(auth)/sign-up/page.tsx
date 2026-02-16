@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { createUser, sendVerificationCode } from '@/app/lib/api/user';
@@ -17,6 +17,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import Image from 'next/image';
 
 type FormData = {
   firstName: string;
@@ -41,6 +42,7 @@ function SignUpPage() {
   const [otpError, setOtpError] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [generatedCode, setGeneratedCode] = useState('');
+  const [yandexLoading, setYandexLoading] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -51,6 +53,9 @@ function SignUpPage() {
     password: '',
     confirmPassword: '',
   });
+
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -259,6 +264,17 @@ function SignUpPage() {
     }
   };
 
+  const handleYandexSignIn = async () => {
+    setYandexLoading(true);
+    try {
+      await signIn("yandex", { callbackUrl });
+    } catch (error) {
+      console.error(error);
+      setError("Ошибка при входе через Яндекс");
+      setYandexLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -303,6 +319,32 @@ function SignUpPage() {
             {/* Шаг 1: Имя, фамилия, возраст */}
             {step === 1 && (
               <div className="space-y-4">
+                <button
+                          onClick={handleYandexSignIn}
+                          disabled={yandexLoading}
+                          className="w-full flex items-center justify-center gap-1 px-4 py-2.5 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {yandexLoading ? (
+                            <span className="flex items-center">
+                              <Image src="/images/Yandex_icon.png" alt="Яндекс" width={30} height={30} />
+                              Вход через Яндекс...
+                            </span>
+                          ) : (
+                            <>
+                              <Image src="/images/Yandex_icon.png" alt="Яндекс" width={30} height={30} />
+                              Войти через Яндекс
+                            </>
+                          )}
+                        </button>
+                
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300"></div>
+                          </div>
+                          <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">или</span>
+                          </div>
+                        </div>
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
                     Имя *

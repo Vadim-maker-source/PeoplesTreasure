@@ -1,9 +1,9 @@
 'use client'
 
-import { getCurrentUser, getUserById, updateProfile } from '@/app/lib/api/user'
+import { getCurrentUser, getUserById, removeAvatar, updateAvatar, updateProfile } from '@/app/lib/api/user'
 import { getUserCourses } from '@/app/lib/api/courses'
 import { useParams } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { 
   Edit, 
   User as UserIcon, 
@@ -21,7 +21,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Trophy,
-  CheckCircle
+  CheckCircle,
+  Camera,
+  Upload,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -218,6 +221,184 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
   );
 };
 
+const AvatarUploadModal = ({ 
+  isOpen, 
+  onClose, 
+  currentAvatar, 
+  onAvatarUpdate 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  currentAvatar?: string | null;
+  onAvatarUpdate: () => void;
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      toast.error('Можно загружать только изображения');
+      return;
+    }
+
+    // Проверка размера (макс 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Размер файла не должен превышать 5MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', selectedFile);
+
+      const result = await updateAvatar(formData);
+      
+      if (result.success) {
+        toast.success('Аватар успешно обновлен');
+        onAvatarUpdate();
+        onClose();
+      } else {
+        toast.error(result.error || 'Ошибка при загрузке аватара');
+      }
+    } catch (error) {
+      toast.error('Ошибка при загрузке аватара');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setIsUploading(true);
+    try {
+      const result = await removeAvatar();
+      
+      if (result.success) {
+        toast.success('Аватар удален');
+        onAvatarUpdate();
+        onClose();
+      } else {
+        toast.error(result.error || 'Ошибка при удалении аватара');
+      }
+    } catch (error) {
+      toast.error('Ошибка при удалении аватара');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-gray-900">Изменить аватар</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 text-black rounded-lg cursor-pointer duration-150"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Предпросмотр */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-[#FFC873]">
+              {preview ? (
+                <img 
+                  src={preview} 
+                  alt="Preview" 
+                  className="w-full h-full object-cover"
+                />
+              ) : currentAvatar ? (
+                <img 
+                  src={currentAvatar} 
+                  alt="Current avatar" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-linear-to-r from-[#FF7340] to-[#FFB840] flex items-center justify-center">
+                  <UserIcon className="text-white" size={48} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Кнопки действий */}
+          <div className="space-y-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              className="hidden"
+            />
+            
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#FFB840] hover:from-[#FFB840]/80 text-white font-medium rounded-lg disabled:opacity-50 cursor-pointer"
+            >
+              <Camera size={18} />
+              Выбрать изображение
+            </button>
+
+            {preview && (
+              <button
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg disabled:opacity-50 cursor-pointer"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Загрузка...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={18} />
+                    Загрузить
+                  </>
+                )}
+              </button>
+            )}
+
+            {currentAvatar && (
+              <button
+                onClick={handleRemove}
+                disabled={isUploading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 font-medium rounded-lg disabled:opacity-50 cursor-pointer"
+              >
+                <Trash2 size={18} />
+                Удалить аватар
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Profile() {
   const params = useParams()
   const slug = params.slug as string
@@ -228,6 +409,7 @@ export default function Profile() {
   const [tests, setTests] = useState<TestType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [formData, setFormData] = useState<UpdateFormData>({
     firstName: '',
@@ -313,6 +495,19 @@ export default function Profile() {
       loadData()
     }
   }, [slug])
+
+  const handleAvatarUpdate = async () => {
+    if (slug) {
+      const userDataResponse = await getUserById(slug) as any;
+      if (userDataResponse) {
+        const safeUser = toSafeUser(userDataResponse);
+        setUser(safeUser);
+      }
+      
+      const currentUserData = await getCurrentUser();
+      setCurrentUser(toSafeUser(currentUserData));
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -450,7 +645,7 @@ export default function Profile() {
                 <>
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#FF7340] hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#FF7340] hover:bg-gray-100 rounded-lg font-medium transition-colors cursor-pointer"
                 >
                   <Edit size={18} />
                   Редактировать
@@ -705,137 +900,211 @@ export default function Profile() {
       
       {/* Модальное окно редактирования профиля */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Редактировать профиль</h2>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
-              >
-                <X size={24} />
-              </button>
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Редактировать профиль</h2>
+        <button
+          onClick={() => setIsEditModalOpen(false)}
+          className="p-2 hover:bg-gray-100 text-black rounded-lg cursor-pointer duration-150"
+        >
+          <X size={24} />
+        </button>
+      </div>
+      
+      {/* Секция смены аватара */}
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Фото профиля</h3>
+        <div className="flex items-center gap-6">
+          {/* Текущий аватар */}
+          <div className="relative group">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#FFC873]">
+              {user.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.firstName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-linear-to-r from-[#FF7340] to-[#FFB840] flex items-center justify-center">
+                  <UserIcon className="text-white" size={40} />
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Кнопки управления аватаром */}
+          <div className="flex-1 space-y-2">
+            <button
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setIsAvatarModalOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#FFB840] hover:from-[#FFB840]/80 text-white font-medium rounded-lg transition-colors cursor-pointer"
+            >
+              <Camera size={18} />
+              Загрузить новое фото
+            </button>
             
-            <form onSubmit={handleUpdateProfile} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Имя *
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Фамилия *
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Возраст *
-                  </label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleInputChange}
-                    min="14"
-                    max="120"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Телефон *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Регион
-                  </label>
-                  <input
-                    type="text"
-                    name="region"
-                    value={formData.region}
-                    onChange={handleInputChange}
-                    placeholder="Например, Москва"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    О себе
-                  </label>
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    rows={3}
-                    placeholder="Расскажите о себе..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none resize-none"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium cursor-pointer"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="flex items-center gap-2 px-6 py-2 bg-[#FFB840] hover:from-[#FFB840]/80 text-white font-medium rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Сохранение...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={18} />
-                      Сохранить
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            {user.avatar && (
+              <button
+                onClick={async () => {
+                  if (confirm('Вы уверены, что хотите удалить аватар?')) {
+                    const result = await removeAvatar();
+                    if (result.success) {
+                      toast.success('Аватар удален');
+                      // Обновляем данные пользователя
+                      const userDataResponse = await getUserById(slug) as any;
+                      if (userDataResponse) {
+                        const safeUser = toSafeUser(userDataResponse);
+                        setUser(safeUser);
+                      }
+                    } else {
+                      toast.error(result.error || 'Ошибка при удалении аватара');
+                    }
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 font-medium rounded-lg transition-colors cursor-pointer"
+              >
+                <Trash2 size={18} />
+                Удалить фото
+              </button>
+            )}
           </div>
         </div>
-      )}
+        <p className="text-xs text-gray-500 mt-3">
+          Рекомендуемый размер: 200x200px. Максимальный размер: 5MB. Форматы: JPG, PNG, GIF
+        </p>
+      </div>
+
+      {/* Форма редактирования профиля */}
+      <form onSubmit={handleUpdateProfile} className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Имя *
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Фамилия *
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Возраст *
+            </label>
+            <input
+              type="number"
+              name="age"
+              value={formData.age}
+              onChange={handleInputChange}
+              min="14"
+              max="120"
+              required
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Телефон *
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Регион
+            </label>
+            <input
+              type="text"
+              name="region"
+              value={formData.region}
+              onChange={handleInputChange}
+              placeholder="Например, Москва"
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              О себе
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={3}
+              placeholder="Расскажите о себе..."
+              className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none resize-none"
+            />
+          </div>
+        </div>
+        
+        <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => setIsEditModalOpen(false)}
+            className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium cursor-pointer"
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            disabled={isUpdating}
+            className="flex items-center gap-2 px-6 py-2 bg-[#FFB840] hover:from-[#FFB840]/80 text-white font-medium rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                Сохранение...
+              </>
+            ) : (
+              <>
+                <Save size={18} />
+                Сохранить
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+{/* Модальное окно для загрузки аватара (остается отдельно) */}
+<AvatarUploadModal
+  isOpen={isAvatarModalOpen}
+  onClose={() => setIsAvatarModalOpen(false)}
+  currentAvatar={user.avatar}
+  onAvatarUpdate={handleAvatarUpdate}
+/>
     </div>
   )
 }

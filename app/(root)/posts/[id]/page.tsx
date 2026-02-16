@@ -525,9 +525,11 @@ export default function PostPage() {
             <div className="flex flex-col mb-4 md:mb-6">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold text-sm md:text-base shrink-0">
-                    {post.author.firstName[0]}{post.author.lastName[0]}
-                  </div>
+                    {post.author.avatar ? <img src={post.author.avatar} alt="" className="w-12 h-12 rounded-full" /> :
+                      <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFCB73] to-[#FF7340] flex items-center justify-center text-white font-bold">
+                        {post.author.firstName[0]}{post.author.lastName[0]}
+                      </div>
+                    }
                   <div className="min-w-0 flex-1">
                     <h3 className="font-bold text-gray-900 dark:text-white text-base md:text-lg truncate">
                       {post.author.firstName} {post.author.lastName} {post.author.verified && (

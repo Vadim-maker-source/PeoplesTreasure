@@ -1,5 +1,6 @@
 import { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import YandexProvider from "next-auth/providers/yandex";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 import { compare } from "bcryptjs";
@@ -30,9 +31,161 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Кастомный адаптер прямо в файле
+const customAdapter = {
+  ...PrismaAdapter(prisma),
+  
+  // Переопределяем createUser
+  createUser: async (data: any) => {
+    const { name, email, emailVerified, image, ...rest } = data;
+    
+    // Разбиваем name на firstName и lastName
+    let firstName = '';
+    let lastName = '';
+    
+    if (name) {
+      const nameParts = name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email: email!,
+        firstName,
+        lastName,
+        age: 0,
+        phone: '',
+        role: 'USER',
+        avatar: image || null,
+        region: '',
+        bio: '',
+        emailVerified: emailVerified || null,
+        ...rest,
+      },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      age: user.age,
+      phone: user.phone,
+      role: user.role,
+      image: user.avatar,
+    };
+  },
+
+  // Переопределяем getUser
+  getUser: async (id: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      age: user.age,
+      phone: user.phone,
+      role: user.role,
+      image: user.avatar,
+    };
+  },
+
+  // Переопределяем getUserByEmail
+  getUserByEmail: async (email: string) => {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      age: user.age,
+      phone: user.phone,
+      role: user.role,
+      image: user.avatar,
+    };
+  },
+
+  // Переопределяем updateUser
+  updateUser: async (data: any) => {
+    const { id, name, ...rest } = data;
+    
+    let firstName = '';
+    let lastName = '';
+    
+    if (name) {
+      const nameParts = name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...rest,
+      },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      age: user.age,
+      phone: user.phone,
+      role: user.role,
+      image: user.avatar,
+    };
+  },
+};
+
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: customAdapter,
   providers: [
+    // Яндекс OAuth провайдер
+    YandexProvider({
+      clientId: process.env.YANDEX_CLIENT_ID!,
+      clientSecret: process.env.YANDEX_CLIENT_SECRET!,
+      async profile(profile) {
+        return {
+          id: profile.id,
+          email: profile.default_email,
+          name: profile.real_name || profile.display_name,
+          firstName: profile.first_name || profile.real_name?.split(' ')[0] || '',
+          lastName: profile.last_name || profile.real_name?.split(' ')[1] || '',
+          age: 0,
+          phone: profile.default_phone?.number || '',
+          role: 'USER',
+          avatar: profile.default_avatar_id 
+            ? `https://avatars.yandex.net/get-yapic/${profile.default_avatar_id}/islands-200` 
+            : null,
+          region: '',
+          bio: '',
+        };
+      },
+    }),
+    
     CredentialsProvider({
       id: "credentials",
       name: "credentials",
@@ -81,12 +234,17 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         token.email = user.email;
       }
+      
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      
       return token;
     },
     async session({ session, token }) {
@@ -126,10 +284,17 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return session;
+    },
+    
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     }
   },
   pages: {
     signIn: '/sign-in',
+    error: '/sign-in',
   },
   session: {
     strategy: "jwt",
