@@ -235,7 +235,6 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
   ]
 };
 
-// Функция для перемешивания вопросов и вариантов ответов
 export function getRandomQuestions(ethnicGroupId: string): Question[] {
   const questions = ethnicGroupQuestions[ethnicGroupId];
   if (!questions) return [];
