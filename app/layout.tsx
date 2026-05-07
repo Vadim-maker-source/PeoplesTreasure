@@ -20,7 +20,7 @@ const nunito = Nunito({
   display: 'swap',
   variable: '--font-nunito',
 });
-
+// SEO оптимизация (делал чат жпт)
 // Структурированные данные для хлебных крошек (поисковые ссылки)
 const breadcrumbData = {
   "@context": "https://schema.org",
