@@ -106,7 +106,6 @@ export async function createPost(formData: CreatePostData) {
 
     const mediaUrls: string[] = [];
     
-    // Загрузка изображений
     for (const file of formData.images) {
       if (file.size > 5 * 1024 * 1024) {
         return { 
@@ -135,7 +134,6 @@ export async function createPost(formData: CreatePostData) {
       }
     }
 
-    // Загрузка видео
     for (const file of formData.videos) {
       if (file.size > 50 * 1024 * 1024) {
         return { 
@@ -178,7 +176,7 @@ export async function createPost(formData: CreatePostData) {
         tags: tagsArray,
         images: mediaUrls,
         authorId: user.id,
-        status: 'pending', // По умолчанию на модерации
+        status: 'pending',
       },
       include: {
         author: {
@@ -192,7 +190,6 @@ export async function createPost(formData: CreatePostData) {
       },
     });
 
-    // Отправка уведомления админу
     try {
       await sendModerationEmail({
         postId: post.id,
@@ -201,8 +198,7 @@ export async function createPost(formData: CreatePostData) {
         authorEmail: user.email,
       });
     } catch (emailError) {
-      console.error('Ошибка отправки email админу:', emailError);
-      // Не прерываем создание поста из-за ошибки email
+      console.error(emailError);
     }
 
     revalidatePath('/');
@@ -225,12 +221,10 @@ export async function createPost(formData: CreatePostData) {
   }
 }
 
-// Функция для модерации поста
 export async function moderatePost(postId: string, action: 'approve' | 'reject') {
   try {
     const user = await getCurrentUser();
     
-    // Проверяем, что пользователь - админ (id = 1)
     if (!user || user.id !== '1') {
       return { 
         success: false, 
@@ -262,9 +256,6 @@ export async function moderatePost(postId: string, action: 'approve' | 'reject')
       },
     });
 
-    // Здесь можно добавить отправку email автору о результате модерации
-    // await sendModerationResultEmail(post.author.email, post.title, action);
-
     revalidatePath('/');
     revalidatePath('/posts');
     revalidatePath('/forum');
@@ -285,7 +276,6 @@ export async function moderatePost(postId: string, action: 'approve' | 'reject')
   }
 }
 
-// Функция для получения постов на модерацию
 export async function getPendingPosts() {
   try {
     const user = await getCurrentUser();
@@ -372,7 +362,7 @@ export async function getAllPosts(
     
     const posts = await prisma.post.findMany({
       where: {
-        status: 'approved', // Только одобренные посты
+        status: 'approved',
       },
       skip,
       take: limit,
@@ -441,7 +431,6 @@ export async function getAllPosts(
   }
 }
 
-// Обновленная функция getPostsByEthnicGroup (только одобренные)
 export async function getPostsByEthnicGroup(
   ethnicGroupId: string, 
   page: number = 1, 
@@ -465,7 +454,7 @@ export async function getPostsByEthnicGroup(
     const posts = await prisma.post.findMany({
       where: {
         ethnicGroupId,
-        status: 'approved', // Только одобренные посты
+        status: 'approved',
       },
       skip,
       take: limit,
@@ -536,7 +525,6 @@ export async function getPostsByEthnicGroup(
   }
 }
 
-// Обновленная функция getPostById (показываем пост только если он одобрен или автор/админ)
 export async function getPostById(id: string) {
   try {
     const user = await getCurrentUser();
@@ -582,11 +570,9 @@ export async function getPostById(id: string) {
       return null;
     }
 
-    // Проверяем доступ к посту
     const isAuthor = user && post.authorId === user.id;
     const isAdmin = user && user.id === '1';
     
-    // Если пост не одобрен и пользователь не автор и не админ - не показываем
     if (post.status !== 'approved' && !isAuthor && !isAdmin) {
       return null;
     }
