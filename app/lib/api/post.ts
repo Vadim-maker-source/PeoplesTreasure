@@ -23,10 +23,9 @@ type CreatePostData = {
   ethnicGroupId: string;
   tags: string;
   images: File[];
-  videos: File[]; // Добавляем видео
+  videos: File[];
 };
 
-// Функция для проверки типа файла
 function isVideoFile(file: File): boolean {
   return file.type.startsWith('video/');
 }
@@ -74,7 +73,6 @@ export async function createPost(formData: CreatePostData) {
 
     const mediaUrls: string[] = [];
     
-    // Загрузка изображений
     for (const file of formData.images) {
       if (file.size > 5 * 1024 * 1024) {
         return { 
@@ -103,9 +101,8 @@ export async function createPost(formData: CreatePostData) {
       }
     }
 
-    // Загрузка видео
     for (const file of formData.videos) {
-      if (file.size > 50 * 1024 * 1024) { // 50MB для видео
+      if (file.size > 50 * 1024 * 1024) {
         return { 
           success: false, 
           error: `Видео "${file.name}" превышает лимит 50 МБ` 
@@ -144,7 +141,7 @@ export async function createPost(formData: CreatePostData) {
         content: formData.content.trim(),
         ethnicGroupId: formData.ethnicGroupId,
         tags: tagsArray,
-        images: mediaUrls, // Сохраняем все медиа в одном массиве
+        images: mediaUrls,
         authorId: user.id,
       },
       include: {
