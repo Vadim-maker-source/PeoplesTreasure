@@ -31,15 +31,12 @@ declare module "next-auth/jwt" {
   }
 }
 
-// Кастомный адаптер прямо в файле
 const customAdapter = {
   ...PrismaAdapter(prisma),
   
-  // Переопределяем createUser
   createUser: async (data: any) => {
     const { name, email, emailVerified, image, ...rest } = data;
     
-    // Разбиваем name на firstName и lastName
     let firstName = '';
     let lastName = '';
     
@@ -79,7 +76,6 @@ const customAdapter = {
     };
   },
 
-  // Переопределяем getUser
   getUser: async (id: string) => {
     const user = await prisma.user.findUnique({
       where: { id },
@@ -101,7 +97,6 @@ const customAdapter = {
     };
   },
 
-  // Переопределяем getUserByEmail
   getUserByEmail: async (email: string) => {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -123,7 +118,6 @@ const customAdapter = {
     };
   },
 
-  // Переопределяем updateUser
   updateUser: async (data: any) => {
     const { id, name, ...rest } = data;
     
@@ -163,7 +157,6 @@ const customAdapter = {
 export const authOptions: NextAuthOptions = {
   adapter: customAdapter,
   providers: [
-    // Яндекс OAuth провайдер
     YandexProvider({
       clientId: process.env.YANDEX_CLIENT_ID!,
       clientSecret: process.env.YANDEX_CLIENT_SECRET!,
