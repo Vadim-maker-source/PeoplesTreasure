@@ -16,7 +16,6 @@ export async function createSupportTicket(subject: string, message: string, user
       throw new Error('Заполните все поля');
     }
 
-    // Создаем запись в базе данных
     const ticket = await prisma.support.create({
       data: {
         userId: user.id,
@@ -88,7 +87,6 @@ export async function getUserSupportTickets(
 
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Получаем количество непрочитанных
     const unreadCount = await prisma.support.count({
       where: {
         userId: user.id,
@@ -136,7 +134,6 @@ export async function getAllSupportTickets(
       throw new Error('Необходима авторизация');
     }
 
-    // Проверяем, что пользователь - админ (id = 1)
     if (user.id !== '1') {
       throw new Error('Доступ запрещен. Только администратор может просматривать все обращения.');
     }
@@ -168,7 +165,6 @@ export async function getAllSupportTickets(
 
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Подсчет непрочитанных сообщений от пользователей
     const unreadCount = await prisma.support.count({
       where: { isReadByAdmin: false },
     });
@@ -195,7 +191,6 @@ export async function getAllSupportTickets(
   }
 }
 
-// Ответить на обращение (только для админа)
 export async function answerSupportTicket(ticketId: string, answer: string) {
   try {
     const user = await getCurrentUser();
@@ -204,7 +199,6 @@ export async function answerSupportTicket(ticketId: string, answer: string) {
       throw new Error('Необходима авторизация');
     }
 
-    // Проверяем, что пользователь - админ (id = 1)
     if (user.id !== '1') {
       throw new Error('Доступ запрещен. Только администратор может отвечать на обращения.');
     }
@@ -218,8 +212,8 @@ export async function answerSupportTicket(ticketId: string, answer: string) {
       data: {
         answer: answer.trim(),
         status: 'answered',
-        isReadByUser: false, // пользователь еще не прочитал ответ
-        isReadByAdmin: true, // админ прочитал (он же и отвечает)
+        isReadByUser: false,
+        isReadByAdmin: true,
       },
     });
 
@@ -241,7 +235,6 @@ export async function answerSupportTicket(ticketId: string, answer: string) {
   }
 }
 
-// Отметить как прочитанное пользователем
 export async function markAsReadByUser(ticketId: string) {
   try {
     const user = await getCurrentUser();
@@ -258,7 +251,6 @@ export async function markAsReadByUser(ticketId: string) {
       throw new Error('Обращение не найдено');
     }
 
-    // Проверяем, что пользователь владелец обращения
     if (ticket.userId !== user.id) {
       throw new Error('Доступ запрещен');
     }
@@ -287,7 +279,6 @@ export async function markAsReadByUser(ticketId: string) {
   }
 }
 
-// Отметить как прочитанное админом
 export async function markAsReadByAdmin(ticketId: string) {
   try {
     const user = await getCurrentUser();
@@ -296,7 +287,6 @@ export async function markAsReadByAdmin(ticketId: string) {
       throw new Error('Необходима авторизация');
     }
 
-    // Проверяем, что пользователь - админ (id = 1)
     if (user.id !== '1') {
       throw new Error('Доступ запрещен');
     }
@@ -324,7 +314,6 @@ export async function markAsReadByAdmin(ticketId: string) {
   }
 }
 
-// Закрыть обращение
 export async function closeSupportTicket(ticketId: string) {
   try {
     const user = await getCurrentUser();
@@ -341,7 +330,6 @@ export async function closeSupportTicket(ticketId: string) {
       throw new Error('Обращение не найдено');
     }
 
-    // Проверяем, что пользователь владелец обращения или админ
     if (ticket.userId !== user.id && user.id !== '1') {
       throw new Error('Доступ запрещен');
     }
@@ -371,7 +359,6 @@ export async function closeSupportTicket(ticketId: string) {
   }
 }
 
-// Получить количество непрочитанных обращений для админа
 export async function getAdminUnreadCount() {
   try {
     const user = await getCurrentUser();
@@ -380,7 +367,6 @@ export async function getAdminUnreadCount() {
       throw new Error('Необходима авторизация');
     }
 
-    // Только для админа
     if (user.id !== '1') {
       return { success: true, unreadCount: 0 };
     }
