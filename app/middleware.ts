@@ -33,7 +33,6 @@ export async function middleware(request: NextRequest) {
       token.sub === '1';
 
     if (!isAdmin) {
-      // Если не админ - редирект на главную или страницу 403
       const forbiddenUrl = new URL('/403', request.url);
       return NextResponse.redirect(forbiddenUrl);
     }
@@ -46,16 +45,8 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// Настройка для каких роутов применять middleware
 export const config = {
   matcher: [
-    /*
-     * Матчим все роуты кроме:
-     * - api/auth (NextAuth)
-     * - статические файлы
-     * - favicon.ico
-     * - публичные файлы
-     */
     '/((?!api/auth|_next/static|_next/image|favicon.ico|images|public).*)',
     '/admin/:path*',
   ],
