@@ -80,7 +80,7 @@ export const sendModerationEmail = async ({
   authorEmail: string;
 }) => {
   try {
-      const adminEmail = process.env.GMAIL_USER; // Email админа
+      const adminEmail = process.env.GMAIL_USER;
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
       const moderationLink = `${baseUrl}/admin/moderate?post=${postId}`;
 
