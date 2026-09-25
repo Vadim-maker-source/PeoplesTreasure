@@ -12,7 +12,6 @@ const contentSecurityPolicy = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  ...(process.env.NODE_ENV === 'production' ? ["upgrade-insecure-requests"] : []),
 ].join('; ');
 
 const nextConfig: NextConfig = {
