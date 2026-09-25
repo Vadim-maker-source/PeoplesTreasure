@@ -28,6 +28,14 @@ export async function GET(_request: Request, context: Context) {
   const body = [
     `#profile-title: ${encodedTitle}`,
     "#profile-update-interval: 12",
+    "#subscription-ping-onopen-enabled: 1",
+    "#ping-type: proxy",
+    "#check-url-via-proxy: https://cp.cloudflare.com/generate_204",
+    "#fragmentation-enable: 1",
+    "#fragmentation-packets: tlshello",
+    "#fragmentation-length: 50-100",
+    "#fragmentation-interval: 5",
+    "#fragmentation-maxsplit: 100-200",
     serverLink,
     "",
   ].join("\n");
@@ -37,8 +45,16 @@ export async function GET(_request: Request, context: Context) {
       "Cache-Control": "private, no-store",
       "Content-Disposition": 'attachment; filename="vadim-vpn.txt"',
       "Content-Type": "text/plain; charset=utf-8",
+      "check-url-via-proxy": "https://cp.cloudflare.com/generate_204",
+      "fragmentation-enable": "1",
+      "fragmentation-interval": "5",
+      "fragmentation-length": "50-100",
+      "fragmentation-maxsplit": "100-200",
+      "fragmentation-packets": "tlshello",
+      "ping-type": "proxy",
       "profile-title": encodedTitle,
       "profile-update-interval": "12",
+      "subscription-ping-onopen-enabled": "1",
     },
   });
 }
