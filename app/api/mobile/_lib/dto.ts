@@ -1,3 +1,13 @@
+import type { NextRequest } from "next/server";
+
+export function publicOrigin(request: NextRequest) {
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host")?.trim();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol = forwardedProto || request.nextUrl.protocol.replace(":", "") || "http";
+  return host ? `${protocol}://${host}` : request.nextUrl.origin;
+}
+
 export function userDto(user: {
   id: string;
   email: string;

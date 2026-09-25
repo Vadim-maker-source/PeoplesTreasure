@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { peoples } from "@/app/lib/peoples";
 import { requireMobileUser } from "../../../_lib/auth";
-import { commentDto, postDto } from "../../../_lib/dto";
+import { commentDto, postDto, publicOrigin } from "../../../_lib/dto";
 import { allowedMediaUrls } from "../../../_lib/media";
 import { fail, ok, serverError } from "../../../_lib/response";
 
@@ -28,9 +28,10 @@ export async function GET(request: NextRequest, context: Context) {
       return fail("Публикация не найдена", 404, "NOT_FOUND");
     }
     const liked = user ? Boolean(await prisma.postLike.findUnique({ where: { userId_postId: { userId: user.id, postId: post.id } } })) : false;
+    const origin = publicOrigin(request);
     return ok({
-      ...postDto(request.nextUrl.origin, post, liked),
-      comments: post.comments.map(comment => commentDto(request.nextUrl.origin, comment)),
+      ...postDto(origin, post, liked),
+      comments: post.comments.map(comment => commentDto(origin, comment)),
     });
   } catch (error) {
     return serverError(error);
@@ -63,7 +64,7 @@ export async function PATCH(request: NextRequest, context: Context) {
         _count: { select: { comments: true } },
       },
     });
-    return ok(postDto(request.nextUrl.origin, post));
+    return ok(postDto(publicOrigin(request), post));
   } catch (error) {
     return serverError(error);
   }

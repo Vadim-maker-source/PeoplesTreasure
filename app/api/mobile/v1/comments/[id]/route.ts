@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireMobileUser } from "../../../_lib/auth";
-import { commentDto } from "../../../_lib/dto";
+import { commentDto, publicOrigin } from "../../../_lib/dto";
 import { fail, ok, serverError } from "../../../_lib/response";
 
 type Context = { params: Promise<{ id: string }> };
@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       data: { content },
       include: { author: { select: { id: true, firstName: true, lastName: true, avatar: true, verified: true } } },
     });
-    return ok(commentDto(request.nextUrl.origin, comment));
+    return ok(commentDto(publicOrigin(request), comment));
   } catch (error) {
     return serverError(error);
   }

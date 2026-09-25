@@ -3,7 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { peoples } from "@/app/lib/peoples";
 import { consumeRateLimit } from "@/app/lib/rate-limit";
 import { requireMobileUser } from "../../_lib/auth";
-import { postDto } from "../../_lib/dto";
+import { postDto, publicOrigin } from "../../_lib/dto";
 import { allowedMediaUrls } from "../../_lib/media";
 import { fail, ok, serverError } from "../../_lib/response";
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       select: { postId: true },
     })).map(item => item.postId) : []);
     return ok({
-      items: posts.map(post => postDto(request.nextUrl.origin, post, liked.has(post.id))),
+      items: posts.map(post => postDto(publicOrigin(request), post, liked.has(post.id))),
       page,
       total,
       hasMore: page * limit < total,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         _count: { select: { comments: true } },
       },
     });
-    return ok(postDto(request.nextUrl.origin, post), 201);
+    return ok(postDto(publicOrigin(request), post), 201);
   } catch (error) {
     return serverError(error);
   }
