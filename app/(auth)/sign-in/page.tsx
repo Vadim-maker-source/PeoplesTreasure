@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { safeCallbackUrl } from "@/app/lib/navigation";
 
 function SignInForm() {
   const [email, setEmail] = useState("");
@@ -13,16 +14,16 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [yandexLoading, setYandexLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    
+
     try {
       const result = await signIn("credentials", {
         email,
@@ -81,7 +82,6 @@ function SignInForm() {
           </p>
         </div>
 
-        {/* Кнопка входа через Яндекс */}
         <button
           onClick={handleYandexSignIn}
           disabled={yandexLoading}

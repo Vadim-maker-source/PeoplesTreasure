@@ -92,15 +92,6 @@ const Home = () => {
         <div className="hanti flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Ханты</p></div>
         <div className="chuvashi flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Чуваши</p></div>
         <div className="tiva flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Тыва</p></div>
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
-        {/* <div className=" flex items-center gap-1"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold">Башкиры</p></div> */}
 
         </div>
         <div className="chukchi flex items-center gap-1 absolute"><div className="h-4 aspect-square bg-red-600 rounded-full"></div><p className="text-white font-bold underline"><Link href="/Чукчи">Чукчи</Link></p></div>

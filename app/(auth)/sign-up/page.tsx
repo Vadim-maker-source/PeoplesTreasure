@@ -18,6 +18,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import Image from 'next/image';
+import { safeCallbackUrl } from '@/app/lib/navigation';
 
 type FormData = {
   firstName: string;
@@ -34,16 +35,14 @@ function SignUpPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // OTP state
+
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [otpValue, setOtpValue] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [generatedCode, setGeneratedCode] = useState('');
   const [yandexLoading, setYandexLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -55,7 +54,7 @@ function SignUpPage() {
   });
 
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,34 +69,34 @@ function SignUpPage() {
       setError('Пожалуйста, заполните все поля');
       return false;
     }
-    
+
     const age = parseInt(formData.age);
     if (age < 6 || age > 120) {
       setError('Возраст должен быть от 6 до 120 лет');
       return false;
     }
-    
+
     return true;
   };
 
   const validateStep2 = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (!formData.email.trim() || !formData.phone.trim()) {
       setError('Пожалуйста, заполните все поля');
       return false;
     }
-    
+
     if (!emailRegex.test(formData.email)) {
       setError('Пожалуйста, введите корректный email');
       return false;
     }
-    
+
     if (formData.phone.length < 10) {
       setError('Пожалуйста, введите корректный номер телефона');
       return false;
     }
-    
+
     return true;
   };
 
@@ -106,23 +105,23 @@ function SignUpPage() {
       setError('Пожалуйста, заполните все поля');
       return false;
     }
-    
-    if (formData.password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
+
+    if (formData.password.length < 8) {
+      setError('Пароль должен содержать минимум 8 символов');
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают');
       return false;
     }
-    
+
     return true;
   };
 
   const handleNext = () => {
     setError('');
-    
+
     if (step === 1 && validateStep1()) {
       setStep(2);
     } else if (step === 2 && validateStep2()) {
@@ -135,22 +134,13 @@ function SignUpPage() {
     setStep(step - 1);
   };
 
-  // Генерация 6-значного кода на клиенте
-  const generateCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
-  // Отправка кода на email
   const sendCode = async () => {
-    const code = generateCode();
-    setGeneratedCode(code);
-    
     setOtpLoading(true);
     setOtpError('');
-    
+
     try {
-      const result = await sendVerificationCode(formData.email, code);
-      
+      const result = await sendVerificationCode(formData.email);
+
       if (result.error) {
         setOtpError(result.error);
       } else {
@@ -175,29 +165,16 @@ function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateStep3()) return;
-    
+
     setLoading(true);
 
     try {
-      // Проверяем, не занят ли email
-      const existingUser = await fetch('/api/auth/check-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email })
-      }).then(res => res.json());
 
-      if (existingUser.exists) {
-        setError('Пользователь с таким email уже существует');
-        setLoading(false);
-        return;
-      }
-
-      // Отправляем код и открываем модалку
       await sendCode();
       setOtpModalOpen(true);
-      
+
     } catch (error) {
       setError('Произошла ошибка при регистрации');
       console.error(error);
@@ -212,16 +189,11 @@ function SignUpPage() {
       return;
     }
 
-    if (otpValue !== generatedCode) {
-      setOtpError('Неверный код подтверждения');
-      return;
-    }
-
     setOtpLoading(true);
     setOtpError('');
 
     try {
-      // Создаем пользователя
+
       const result = await createUser({
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -230,7 +202,7 @@ function SignUpPage() {
         age: parseInt(formData.age),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-      });
+      }, otpValue);
 
       if (result.error) {
         setOtpError(result.error);
@@ -240,9 +212,7 @@ function SignUpPage() {
 
       setOtpModalOpen(false);
       setOtpValue('');
-      setGeneratedCode('');
 
-      // Автоматический вход
       const signInResult = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -316,7 +286,6 @@ function SignUpPage() {
               </div>
             )}
 
-            {/* Шаг 1: Имя, фамилия, возраст */}
             {step === 1 && (
               <div className="space-y-4">
                 <button
@@ -336,7 +305,7 @@ function SignUpPage() {
                             </>
                           )}
                         </button>
-                
+
                         <div className="relative">
                           <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-300"></div>
@@ -360,7 +329,7 @@ function SignUpPage() {
                     placeholder="Введите ваше имя"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
                     Фамилия *
@@ -376,7 +345,7 @@ function SignUpPage() {
                     placeholder="Введите вашу фамилию"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="age" className="block text-sm font-medium text-gray-700">
                     Возраст *
@@ -398,7 +367,6 @@ function SignUpPage() {
               </div>
             )}
 
-            {/* Шаг 2: Email и телефон */}
             {step === 2 && (
               <div className="space-y-4">
                 <div>
@@ -416,7 +384,7 @@ function SignUpPage() {
                     placeholder="example@mail.ru"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                     Телефон *
@@ -435,7 +403,6 @@ function SignUpPage() {
               </div>
             )}
 
-            {/* Шаг 3: Пароль */}
             {step === 3 && (
               <div className="space-y-4">
                 <div>
@@ -453,7 +420,7 @@ function SignUpPage() {
                     placeholder="Минимум 6 символов"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                     Подтвердите пароль *
@@ -526,7 +493,6 @@ function SignUpPage() {
         </div>
       </div>
 
-      {/* OTP Modal */}
       <Dialog open={otpModalOpen} onOpenChange={setOtpModalOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -538,7 +504,7 @@ function SignUpPage() {
               <span className="font-medium text-gray-900">{formData.email}</span>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex flex-col items-center space-y-6 py-4">
             <InputOTP
               maxLength={6}
@@ -588,8 +554,8 @@ function SignUpPage() {
                 disabled={otpLoading || otpCooldown > 0}
                 className="text-sm text-[#FF7340] hover:underline disabled:text-gray-400 disabled:no-underline"
               >
-                {otpCooldown > 0 
-                  ? `Отправить код повторно через ${otpCooldown}с` 
+                {otpCooldown > 0
+                  ? `Отправить код повторно через ${otpCooldown}с`
                   : 'Отправить код повторно'}
               </button>
             </div>

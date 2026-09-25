@@ -40,12 +40,12 @@ export default function CreatePostPage() {
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      
+
       if (mediaFiles.length + newFiles.length > 10) {
         alert('Максимальное количество файлов - 10');
         return;
       }
-  
+
       const newMediaFiles: MediaFile[] = newFiles.map(file => {
         const type = file.type.startsWith('video/') ? 'video' : 'image';
         return {
@@ -54,7 +54,7 @@ export default function CreatePostPage() {
           preview: type === 'image' ? URL.createObjectURL(file) : undefined
         };
       });
-  
+
       setMediaFiles(prev => [...prev, ...newMediaFiles]);
     }
   };
@@ -69,23 +69,22 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       alert('Введите заголовок поста');
       return;
     }
-    
+
     if (!formData.content.trim()) {
       alert('Введите содержание поста');
       return;
     }
-    
+
     if (!formData.ethnicGroupId) {
       alert('Выберите народ');
       return;
     }
-    
-    // Валидация файлов
+
     for (const media of mediaFiles) {
       if (media.type === 'image' && media.file.size > 5 * 1024 * 1024) {
         alert(`Изображение "${media.file.name}" не должно превышать 5MB`);
@@ -114,13 +113,13 @@ export default function CreatePostPage() {
       });
 
       if (result.success) {
-        // Очищаем preview URL'ы
+
         mediaFiles.forEach(media => {
           if (media.preview) {
             URL.revokeObjectURL(media.preview);
           }
         });
-        
+
         if (result.redirectUrl) {
           router.push(result.redirectUrl);
         } else {
@@ -143,7 +142,7 @@ export default function CreatePostPage() {
     <div className="py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Заголовок */}
+
           <div className="bg-linear-to-r from-[#FF7340] to-[#FF4500] px-8 py-10">
             <div className="flex items-center justify-between">
               <div>
@@ -162,10 +161,9 @@ export default function CreatePostPage() {
             </div>
           </div>
 
-          {/* Форма */}
           <form onSubmit={handleSubmit} className="p-8">
             <div className="space-y-8">
-              {/* Заголовок */}
+
               <div>
                 <label className="block text-lg font-semibold text-gray-800 mb-3">
                   Заголовок поста *
@@ -184,7 +182,6 @@ export default function CreatePostPage() {
                 </p>
               </div>
 
-              {/* Выбор народа */}
               <div>
                 <label className="block text-lg font-semibold text-gray-800 mb-3">
                   Выберите народ
@@ -204,7 +201,6 @@ export default function CreatePostPage() {
                 </select>
               </div>
 
-              {/* Содержимое */}
               <div>
                 <label className="block text-lg font-semibold text-gray-800 mb-3">
                   Содержание поста *
@@ -223,7 +219,6 @@ export default function CreatePostPage() {
                 </p>
               </div>
 
-              {/* Теги */}
               <div>
                 <label className="block text-lg font-semibold text-gray-800 mb-3">
                   Теги
@@ -241,12 +236,11 @@ export default function CreatePostPage() {
                 </p>
               </div>
 
-              {/* Загрузка медиафайлов */}
               <div>
                 <label className="block text-lg font-semibold text-gray-800 mb-3">
                   Изображения и видео
                 </label>
-                
+
                 <div className="mb-4">
                   <label className="block">
                     <input
@@ -269,8 +263,7 @@ export default function CreatePostPage() {
                     </div>
                   </label>
                 </div>
-                
-                {/* Список загруженных файлов */}
+
                 {mediaFiles.length > 0 && (
                   <div className="mt-4">
                     <h4 className="text-gray-700 font-medium mb-3">Загруженные файлы:</h4>
@@ -325,7 +318,6 @@ export default function CreatePostPage() {
                 )}
               </div>
 
-              {/* Кнопки действий */}
               <div className="pt-6 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
@@ -345,7 +337,7 @@ export default function CreatePostPage() {
                       </div>
                     )}
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => router.back()}
@@ -363,7 +355,6 @@ export default function CreatePostPage() {
           </form>
         </div>
 
-        {/* Советы */}
         <div className="mt-8 bg-linear-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200">
           <h3 className="text-xl font-bold text-emerald-800 mb-4">💡 Советы по созданию хорошего поста:</h3>
           <ul className="space-y-3">

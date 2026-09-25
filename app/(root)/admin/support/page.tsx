@@ -37,7 +37,7 @@ export default function AdminSupportPage() {
 
     const checkAuthorization = async () => {
         const user = await getCurrentUser();
-        if (user && user.id === '1') {
+        if (user?.role === 'ADMIN') {
             setIsAuthorized(true);
         } else {
             setIsAuthorized(false);
@@ -52,7 +52,7 @@ export default function AdminSupportPage() {
             20,
             filterStatus === 'all' ? undefined : filterStatus as any
         );
-        
+
         if (result.success) {
             setTickets(result.tickets || []);
             setPagination(result.pagination || {
@@ -182,7 +182,6 @@ export default function AdminSupportPage() {
                     </div>
                 </div>
 
-                {/* Фильтры */}
                 <div className="mb-6">
                     <div className="flex flex-wrap gap-2">
                         {[
@@ -198,8 +197,8 @@ export default function AdminSupportPage() {
                                     setPagination(prev => ({ ...prev, currentPage: 1 }));
                                 }}
                                 className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
-                                    filterStatus === filter.value 
-                                        ? 'bg-[#FF7340] text-white' 
+                                    filterStatus === filter.value
+                                        ? 'bg-[#FF7340] text-white'
                                         : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800'
                                 }`}
                             >
@@ -221,15 +220,15 @@ export default function AdminSupportPage() {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Список обращений */}
+
                             <div className="lg:col-span-2">
                                 <div className="space-y-4">
                                     {tickets.map(ticket => (
-                                        <div 
-                                            key={ticket.id} 
+                                        <div
+                                            key={ticket.id}
                                             className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border p-6 cursor-pointer hover:shadow-md transition-all ${
-                                                !ticket.isReadByAdmin 
-                                                    ? 'border-[#FF7340] dark:border-[#FF7340] ring-1 ring-[#FF7340]/20' 
+                                                !ticket.isReadByAdmin
+                                                    ? 'border-[#FF7340] dark:border-[#FF7340] ring-1 ring-[#FF7340]/20'
                                                     : 'border-gray-200 dark:border-gray-800'
                                             }`}
                                             onClick={() => setSelectedTicket(ticket)}
@@ -250,9 +249,9 @@ export default function AdminSupportPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            
+
                                             <p className="text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">{ticket.message}</p>
-                                            
+
                                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                                     <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
@@ -300,7 +299,6 @@ export default function AdminSupportPage() {
                                     ))}
                                 </div>
 
-                                {/* Пагинация */}
                                 {pagination.totalPages > 1 && (
                                     <div className="mt-8 flex justify-center">
                                         <div className="flex gap-2">
@@ -308,8 +306,8 @@ export default function AdminSupportPage() {
                                                 onClick={() => setPagination(prev => ({...prev, currentPage: prev.currentPage - 1}))}
                                                 disabled={!pagination.hasPrevPage}
                                                 className={`px-4 py-2 rounded-lg text-sm cursor-pointer ${
-                                                    !pagination.hasPrevPage 
-                                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                                                    !pagination.hasPrevPage
+                                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                                                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                                 }`}
                                             >
@@ -322,8 +320,8 @@ export default function AdminSupportPage() {
                                                 onClick={() => setPagination(prev => ({...prev, currentPage: prev.currentPage + 1}))}
                                                 disabled={!pagination.hasNextPage}
                                                 className={`px-4 py-2 rounded-lg text-sm cursor-pointer ${
-                                                    !pagination.hasNextPage 
-                                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                                                    !pagination.hasNextPage
+                                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                                                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                                 }`}
                                             >
@@ -334,7 +332,6 @@ export default function AdminSupportPage() {
                                 )}
                             </div>
 
-                            {/* Панель ответа */}
                             <div className="lg:col-span-1">
                                 {selectedTicket ? (
                                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sticky top-8">
@@ -364,7 +361,7 @@ export default function AdminSupportPage() {
                                                     {selectedTicket.message}
                                                 </p>
                                             </div>
-                                            
+
                                             {selectedTicket.answer && (
                                                 <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/10 rounded-xl">
                                                     <p className="font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">

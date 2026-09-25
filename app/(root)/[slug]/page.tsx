@@ -35,20 +35,20 @@ const PeoplePage = () => {
 
     useEffect(() => {
         const peopleName = params.slug as string;
-        
+
         if (!peopleName) {
             setIsLoading(false);
             return;
         }
 
         const decodedName = decodeURIComponent(peopleName);
-        const foundPeople = peoples.find(p => 
+        const foundPeople = peoples.find(p =>
             p.name.toLowerCase() === decodedName.toLowerCase()
         );
-        
+
         setPeople(foundPeople || null);
         setIsLoading(false);
-        
+
         if (!foundPeople) {
             console.log(`Народ "${decodedName}" не найден в базе данных`);
         }
@@ -153,7 +153,7 @@ const PeoplePage = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        
+
                         <button
                             onClick={nextSlide}
                             className="absolute cursor-pointer right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110"
@@ -170,8 +170,8 @@ const PeoplePage = () => {
                                     key={index}
                                     onClick={() => goToSlide(index)}
                                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                        index === currentSlide 
-                                            ? 'bg-white scale-125' 
+                                        index === currentSlide
+                                            ? 'bg-white scale-125'
                                             : 'bg-white/60 hover:bg-white/80'
                                     }`}
                                     aria-label={`Перейти к слайду ${index + 1}`}
@@ -186,7 +186,7 @@ const PeoplePage = () => {
 
     const renderList = (items: string[]) => {
         if (!items || items.length === 0) return null;
-        
+
         return (
             <ul className="list-disc pl-5 mt-2 space-y-1">
                 {items.map((item, index) => (
@@ -216,7 +216,7 @@ const PeoplePage = () => {
                     <h1 className="text-3xl font-bold text-red-600 mb-4">Народ не найден</h1>
                     <p className="text-gray-600 mb-4">К сожалению, информация о данном народе отсутствует</p>
                     <Link
-                        href="/" 
+                        href="/"
                         className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300"
                     >
                         Вернуться на главную
@@ -229,7 +229,7 @@ const PeoplePage = () => {
     return (
         <div className="w-full mt-8">
             <h1 className="text-3xl text-black dark:text-white font-semibold text-center mt-8">{people.name}</h1>
-            
+
             <div className="w-full mt-8 mb-8">
                 <div className="w-full h-4 bg-[#FFA100]"></div>
                 <div className="w-full h-4 bg-[#FF7C00]"></div>

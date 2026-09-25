@@ -12,7 +12,7 @@ const Support = () => {
     const [userTickets, setUserTickets] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [showMyTickets, setShowMyTickets] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         subject: '',
         message: '',
@@ -32,7 +32,7 @@ const Support = () => {
 
     const loadUserTickets = async () => {
         if (!user) return;
-        
+
         const result = await getUserSupportTickets();
         if (result.success) {
             setUserTickets(result.tickets || []);
@@ -58,12 +58,7 @@ const Support = () => {
         setIsSubmitting(true);
 
         try {
-            const result = await createSupportTicket(
-                formData.subject,
-                formData.message,
-                user.email || '',
-                `${user.firstName} ${user.lastName}`
-            );
+            const result = await createSupportTicket(formData.subject, formData.message);
 
             if (result.success) {
                 toast.success(result.message);
@@ -121,8 +116,7 @@ const Support = () => {
                         Свяжитесь с нами, и мы обязательно вам поможем
                     </p>
                 </div>
-                
-                {/* Форма создания обращения */}
+
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                     <div className="p-8">
                         <div className="mb-8">

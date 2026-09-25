@@ -1,107 +1,102 @@
-'use server';
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "../prisma";
-import { getCurrentUser } from "./user";
+import { requireAdmin, requireUser } from "../authorization";
+import { consumeRateLimit } from "../rate-limit";
 
-export async function createSupportTicket(subject: string, message: string, userEmail: string, fromName: string) {
+type SupportStatus = "pending" | "answered" | "closed";
+
+function errorResult(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : fallback;
+  return {
+    success: false as const,
+    error: message,
+    isAuthError: message === "Необходима авторизация",
+  };
+}
+
+async function syncUnreadCount(userId: string) {
+  const unreadCount = await prisma.support.count({
+    where: { userId, answer: { not: null }, isReadByUser: false },
+  });
+  await prisma.user.update({
+    where: { id: userId },
+    data: { unreadSupportCount: unreadCount },
+  });
+  return unreadCount;
+}
+
+export async function createSupportTicket(subject: string, message: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    if (!subject.trim() || !message.trim()) {
-      throw new Error('Заполните все поля');
-    }
+    const user = await requireUser();
+    const rateLimit = await consumeRateLimit('support-ticket', user.id, 5, 60 * 60 * 1000);
+    if (!rateLimit.allowed) throw new Error("Слишком много обращений. Попробуйте позже");
+    const cleanSubject = subject.trim();
+    const cleanMessage = message.trim();
+    if (!cleanSubject || !cleanMessage) throw new Error("Заполните все поля");
+    if (cleanSubject.length > 150) throw new Error("Тема слишком длинная");
+    if (cleanMessage.length > 5000) throw new Error("Сообщение слишком длинное");
 
     const ticket = await prisma.support.create({
       data: {
         userId: user.id,
-        subject: subject.trim(),
-        message: message.trim(),
-        status: 'pending',
+        subject: cleanSubject,
+        message: cleanMessage,
+        status: "pending",
         isReadByAdmin: false,
         isReadByUser: false,
       },
     });
 
-    revalidatePath('/support');
-    revalidatePath('/admin/support');
-    revalidatePath('/profile');
+    revalidatePath("/support");
+    revalidatePath("/admin/support");
+    revalidatePath("/profile");
 
     return {
-      success: true,
+      success: true as const,
       ticket,
-      message: 'Обращение успешно отправлено. Мы ответим вам в ближайшее время.'
+      message: "Обращение успешно отправлено. Мы ответим вам в ближайшее время.",
     };
   } catch (error) {
-    console.error('Error creating support ticket:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось создать обращение',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error creating support ticket:", error);
+    return errorResult(error, "Не удалось создать обращение");
   }
 }
 
 export async function getUserSupportTickets(
-  page: number = 1,
-  limit: number = 10,
-  status?: 'pending' | 'answered' | 'closed'
+  page = 1,
+  limit = 10,
+  status?: SupportStatus,
 ) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
+    const user = await requireUser();
+    page = Math.max(1, Math.floor(page));
+    limit = Math.min(50, Math.max(1, Math.floor(limit)));
+    const where = { userId: user.id, ...(status ? { status } : {}) };
     const skip = (page - 1) * limit;
-    const where = { 
-      userId: user.id,
-      ...(status && { status })
-    };
 
-    const [tickets, totalCount] = await Promise.all([
+    const [tickets, totalCount, unreadCount] = await Promise.all([
       prisma.support.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-            },
+            select: { id: true, email: true, firstName: true, lastName: true, avatar: true },
           },
         },
       }),
       prisma.support.count({ where }),
+      prisma.support.count({
+        where: { userId: user.id, answer: { not: null }, isReadByUser: false },
+      }),
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
-
-    const unreadCount = await prisma.support.count({
-      where: {
-        userId: user.id,
-        answer: { not: null },
-        isReadByUser: false,
-      },
-    });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { unreadSupportCount: unreadCount },
-    });
-
     return {
-      success: true,
+      success: true as const,
       tickets,
       unreadCount,
       pagination: {
@@ -113,65 +108,44 @@ export async function getUserSupportTickets(
       },
     };
   } catch (error) {
-    console.error('Error getting user support tickets:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось загрузить обращения',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error getting user support tickets:", error);
+    return errorResult(error, "Не удалось загрузить обращения");
   }
 }
 
 export async function getAllSupportTickets(
-  page: number = 1,
-  limit: number = 20,
-  status?: 'pending' | 'answered' | 'closed'
+  page = 1,
+  limit = 20,
+  status?: SupportStatus,
 ) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    if (user.id !== '1') {
-      throw new Error('Доступ запрещен. Только администратор может просматривать все обращения.');
-    }
-
-    const skip = (page - 1) * limit;
-    
+    await requireAdmin();
+    page = Math.max(1, Math.floor(page));
+    limit = Math.min(100, Math.max(1, Math.floor(limit)));
     const where = status ? { status } : {};
+    const skip = (page - 1) * limit;
 
-    const [tickets, totalCount] = await Promise.all([
+    const [tickets, totalCount, unreadCount] = await Promise.all([
       prisma.support.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-            },
+            select: { id: true, email: true, firstName: true, lastName: true, avatar: true },
           },
         },
       }),
       prisma.support.count({ where }),
+      prisma.support.count({ where: { isReadByAdmin: false } }),
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
-
-    const unreadCount = await prisma.support.count({
-      where: { isReadByAdmin: false },
-    });
-
     return {
-      success: true,
+      success: true as const,
       tickets,
+      unreadCount,
       pagination: {
         currentPage: page,
         totalPages,
@@ -179,412 +153,119 @@ export async function getAllSupportTickets(
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       },
-      unreadCount,
     };
   } catch (error) {
-    console.error('Error getting all support tickets:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось загрузить обращения',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error getting support tickets:", error);
+    return errorResult(error, "Не удалось загрузить обращения");
   }
 }
 
 export async function answerSupportTicket(ticketId: string, answer: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
+    await requireAdmin();
+    const cleanAnswer = answer.trim();
+    if (!cleanAnswer) throw new Error("Заполните ответ");
+    if (cleanAnswer.length > 5000) throw new Error("Ответ слишком длинный");
 
-    if (user.id !== '1') {
-      throw new Error('Доступ запрещен. Только администратор может отвечать на обращения.');
-    }
-
-    if (!answer.trim()) {
-      throw new Error('Заполните ответ');
-    }
-
-    const updatedTicket = await prisma.support.update({
+    const ticket = await prisma.support.update({
       where: { id: ticketId },
       data: {
-        answer: answer.trim(),
-        status: 'answered',
+        answer: cleanAnswer,
+        status: "answered",
         isReadByUser: false,
         isReadByAdmin: true,
       },
     });
 
-    revalidatePath('/admin/support');
-    revalidatePath(`/support`);
-
-    return {
-      success: true,
-      ticket: updatedTicket,
-      message: 'Ответ успешно отправлен'
-    };
+    revalidatePath("/admin/support");
+    revalidatePath("/support");
+    return { success: true as const, ticket, message: "Ответ успешно отправлен" };
   } catch (error) {
-    console.error('Error answering support ticket:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось отправить ответ',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
-  }
-}
-
-export async function markAsReadByUser(ticketId: string) {
-  try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    const ticket = await prisma.support.findUnique({
-      where: { id: ticketId },
-    });
-
-    if (!ticket) {
-      throw new Error('Обращение не найдено');
-    }
-
-    if (ticket.userId !== user.id) {
-      throw new Error('Доступ запрещен');
-    }
-
-    const updatedTicket = await prisma.support.update({
-      where: { id: ticketId },
-      data: {
-        isReadByUser: true,
-      },
-    });
-
-    revalidatePath('/support');
-    revalidatePath('/profile');
-
-    return {
-      success: true,
-      ticket: updatedTicket,
-    };
-  } catch (error) {
-    console.error('Error marking ticket as read:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось обновить статус',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error answering support ticket:", error);
+    return errorResult(error, "Не удалось отправить ответ");
   }
 }
 
 export async function markAsReadByAdmin(ticketId: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    if (user.id !== '1') {
-      throw new Error('Доступ запрещен');
-    }
-
-    const updatedTicket = await prisma.support.update({
+    await requireAdmin();
+    const ticket = await prisma.support.update({
       where: { id: ticketId },
-      data: {
-        isReadByAdmin: true,
-      },
+      data: { isReadByAdmin: true },
     });
-
-    revalidatePath('/admin/support');
-
-    return {
-      success: true,
-      ticket: updatedTicket,
-    };
+    revalidatePath("/admin/support");
+    return { success: true as const, ticket };
   } catch (error) {
-    console.error('Error marking ticket as read by admin:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось обновить статус',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error marking support ticket as read:", error);
+    return errorResult(error, "Не удалось обновить статус");
   }
 }
 
 export async function closeSupportTicket(ticketId: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    const ticket = await prisma.support.findUnique({
+    await requireAdmin();
+    const ticket = await prisma.support.update({
       where: { id: ticketId },
+      data: { status: "closed" },
     });
-
-    if (!ticket) {
-      throw new Error('Обращение не найдено');
-    }
-
-    if (ticket.userId !== user.id && user.id !== '1') {
-      throw new Error('Доступ запрещен');
-    }
-
-    const updatedTicket = await prisma.support.update({
-      where: { id: ticketId },
-      data: {
-        status: 'closed',
-      },
-    });
-
-    revalidatePath('/support');
-    revalidatePath('/admin/support');
-
-    return {
-      success: true,
-      ticket: updatedTicket,
-      message: 'Обращение закрыто'
-    };
+    revalidatePath("/admin/support");
+    revalidatePath("/support");
+    return { success: true as const, ticket, message: "Обращение закрыто" };
   } catch (error) {
-    console.error('Error closing support ticket:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось закрыть обращение',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error closing support ticket:", error);
+    return errorResult(error, "Не удалось закрыть обращение");
   }
 }
 
 export async function getAdminUnreadCount() {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    if (user.id !== '1') {
-      return { success: true, unreadCount: 0 };
-    }
-
-    const unreadCount = await prisma.support.count({
-      where: { isReadByAdmin: false },
-    });
-
-    return {
-      success: true,
-      unreadCount,
-    };
+    await requireAdmin();
+    const unreadCount = await prisma.support.count({ where: { isReadByAdmin: false } });
+    return { success: true as const, unreadCount };
   } catch (error) {
-    console.error('Error getting admin unread count:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось загрузить статистику',
-    };
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-export type SupportTicket = {
-  id: string;
-  userId: string;
-  subject: string;
-  message: string;
-  answer?: string | null;
-  status: 'pending' | 'answered' | 'closed';
-  isReadByUser: boolean;
-  isReadByAdmin: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  answeredAt?: Date | null;
-  user?: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    avatar?: string | null;
-  };
-};
-
-
-export async function getUserUnreadSupportCount() {
-  try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      return { success: true, unreadCount: 0 };
-    }
-
-    const userData = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { unreadSupportCount: true }
-    });
-
-    return {
-      success: true,
-      unreadCount: userData?.unreadSupportCount || 0
-    };
-  } catch (error) {
-    console.error('Error getting user unread count:', error);
-    return { success: false, error: 'Не удалось получить количество непрочитанных' };
+    console.error("Error getting unread support count:", error);
+    return errorResult(error, "Не удалось загрузить статистику");
   }
 }
 
 export async function markSupportAsRead(ticketId: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    const ticket = await prisma.support.findUnique({
-      where: { id: ticketId },
-    });
-
-    if (!ticket) {
-      throw new Error('Обращение не найдено');
-    }
-
-    if (ticket.userId !== user.id) {
-      throw new Error('Это не ваше обращение');
-    }
-
-    if (!ticket.answer) {
-      throw new Error('На это обращение еще нет ответа');
-    }
+    const user = await requireUser();
+    const ticket = await prisma.support.findUnique({ where: { id: ticketId } });
+    if (!ticket) throw new Error("Обращение не найдено");
+    if (ticket.userId !== user.id) throw new Error("Это не ваше обращение");
+    if (!ticket.answer) throw new Error("На это обращение еще нет ответа");
 
     await prisma.support.update({
       where: { id: ticketId },
       data: { isReadByUser: true },
     });
+    const unreadCount = await syncUnreadCount(user.id);
 
-    const unreadCount = await prisma.support.count({
-      where: {
-        userId: user.id,
-        answer: { not: null },
-        isReadByUser: false,
-      },
-    });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { unreadSupportCount: unreadCount },
-    });
-
-    revalidatePath('/my-support');
-    revalidatePath('/support');
-
-    return {
-      success: true,
-      message: 'Отмечено как прочитанное',
-      unreadCount,
-    };
+    revalidatePath("/my-support");
+    revalidatePath("/support");
+    return { success: true as const, message: "Отмечено как прочитанное", unreadCount };
   } catch (error) {
-    console.error('Error marking support as read:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось обновить статус',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error marking support ticket as read:", error);
+    return errorResult(error, "Не удалось обновить статус");
   }
 }
 
 export async function closeUserSupportTicket(ticketId: string) {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    const ticket = await prisma.support.findUnique({
-      where: { id: ticketId },
-    });
-
-    if (!ticket) {
-      throw new Error('Обращение не найдено');
-    }
-
-    if (ticket.userId !== user.id) {
-      throw new Error('Это не ваше обращение');
-    }
+    const user = await requireUser();
+    const ticket = await prisma.support.findUnique({ where: { id: ticketId } });
+    if (!ticket) throw new Error("Обращение не найдено");
+    if (ticket.userId !== user.id) throw new Error("Это не ваше обращение");
 
     await prisma.support.update({
       where: { id: ticketId },
-      data: { status: 'closed' },
+      data: { status: "closed" },
     });
-
-    revalidatePath('/my-support');
-
-    return {
-      success: true,
-      message: 'Обращение закрыто'
-    };
+    revalidatePath("/my-support");
+    return { success: true as const, message: "Обращение закрыто" };
   } catch (error) {
-    console.error('Error closing support ticket:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось закрыть обращение',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
-  }
-}
-
-export async function getSupportTicketById(ticketId: string) {
-  try {
-    const user = await getCurrentUser();
-    
-    if (!user) {
-      throw new Error('Необходима авторизация');
-    }
-
-    const ticket = await prisma.support.findUnique({
-      where: { id: ticketId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-          },
-        },
-      },
-    });
-
-    if (!ticket) {
-      throw new Error('Обращение не найдено');
-    }
-
-    if (ticket.userId !== user.id) {
-      throw new Error('Это не ваше обращение');
-    }
-
-    return {
-      success: true,
-      ticket,
-    };
-  } catch (error) {
-    console.error('Error getting support ticket by id:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Не удалось загрузить обращение',
-      isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
-    };
+    console.error("Error closing support ticket:", error);
+    return errorResult(error, "Не удалось закрыть обращение");
   }
 }

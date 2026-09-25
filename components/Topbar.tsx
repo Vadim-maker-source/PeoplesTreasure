@@ -15,13 +15,13 @@ const Topbar = () => {
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [pendingPostsCount, setPendingPostsCount] = useState(0) // Добавьте состояние
+  const [pendingPostsCount, setPendingPostsCount] = useState(0)
 
   const router = useRouter()
-  
+
   const handleScrollDebounced = () => {
     const currentScrollY = window.scrollY
-    
+
     if (currentScrollY > lastScrollY + 50) {
       setIsVisible(false)
       setLastScrollY(currentScrollY)
@@ -30,20 +30,19 @@ const Topbar = () => {
       setIsVisible(true)
       setLastScrollY(currentScrollY)
     }
-    
+
     if (currentScrollY < 100) {
       setIsVisible(true)
     }
   }
-  
+
   useEffect(() => {
     const checkAuth = async () => {
       const currentUser = await getCurrentUser()
       if(currentUser){
         setUser(currentUser)
-        
-        // Загружаем количество постов на модерации только для админа
-        if (currentUser.id === '1') {
+
+        if (currentUser.role === 'ADMIN') {
           try {
             const count = await getPendingPostsCount()
             setPendingPostsCount(count)
@@ -56,10 +55,10 @@ const Topbar = () => {
 
     checkAuth()
   }, [])
-  
+
   useEffect(() => {
     window.addEventListener('scroll', handleScrollDebounced)
-    
+
     return () => {
       window.removeEventListener('scroll', handleScrollDebounced)
     }
@@ -110,18 +109,18 @@ const Topbar = () => {
           shadow-md
         `}
       >
-        <img 
-          src="/images/logo2.png" 
-          alt="Логотип" 
-          className="h-9 w-76 hidden md:block dark:hidden" 
+        <img
+          src="/images/logo2.png"
+          alt="Логотип"
+          className="h-9 w-76 hidden md:block dark:hidden"
         />
-        <img 
-          src="/images/logo-white.png" 
-          alt="Логотип" 
-          className="h-9 w-86 hidden md:dark:block" 
+        <img
+          src="/images/logo-white.png"
+          alt="Логотип"
+          className="h-9 w-86 hidden md:dark:block"
         />
         <img src="/images/logo.png" alt="Логотип" className="h-9 aspect-square block md:hidden" />
-        
+
         <div className="hidden md:flex items-center justify-between gap-6">
           <NavLink href="/">Главная</NavLink>
           <NavLink href="/#narodi">Народы России</NavLink>
@@ -129,8 +128,8 @@ const Topbar = () => {
           <NavLink href="/support">Написать нам</NavLink>
           <NavLink href="/forum">Форум</NavLink>
           <NavLink href="/event">События</NavLink>
-          
-          {user?.id === '1' && (
+
+          {user?.role === 'ADMIN' && (
             <NavLink href="/admin/support">
               <span className="relative">
                 Поддержка (админ)
@@ -154,7 +153,7 @@ const Topbar = () => {
             </span>
           </NavLink>
 
-          {user?.id === '1' && (
+          {user?.role === 'ADMIN' && (
             <NavLink href="/admin/moderate">
               <span className="relative">
                 Модерация (админ)
@@ -229,25 +228,25 @@ const Topbar = () => {
               Главная
             </div>
           </Link>
-          
+
           <Link href="/#narodi" onClick={handleLinkClick}>
             <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
               Народы России
             </div>
           </Link>
-          
+
           <Link href="/#map" onClick={handleLinkClick}>
             <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
               Карта России
             </div>
           </Link>
-          
+
           <Link href="/support" onClick={handleLinkClick}>
             <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
               Написать нам
             </div>
           </Link>
-          
+
           <Link href="/forum" onClick={handleLinkClick}>
             <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
               Форум
@@ -260,7 +259,7 @@ const Topbar = () => {
             </div>
           </Link>
 
-          {user?.id === '1' && (
+          {user?.role === 'ADMIN' && (
             <>
               <Link href="/admin/support" onClick={handleLinkClick}>
                 <div className="py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer relative">
@@ -309,7 +308,7 @@ const Topbar = () => {
                   <span>Профиль: {user.firstName}</span>
                 </div>
               </Link>
-              
+
               <button
                 onClick={handleLogOut}
                 className="w-full text-left py-3 px-4 hover:bg-[#FFB840]/20 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer flex items-center gap-2"

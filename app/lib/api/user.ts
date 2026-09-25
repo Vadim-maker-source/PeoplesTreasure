@@ -4,9 +4,12 @@ import { hash, compare } from 'bcryptjs';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+import { createHmac, randomInt, timingSafeEqual } from 'crypto';
 import transporter from '../nodemailer';
 import { prisma } from '../prisma';
-import { uploadFile } from './post';
+import { consumeRateLimit } from '../rate-limit';
+import { uploadFile } from '../storage';
 
 export type RegisterData = {
   firstName: string;
@@ -45,58 +48,76 @@ export type UserWithRelations = User & {
   };
 };
 
-export async function sendVerificationCode(email: string, code: string) {
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const verificationLifetimeMs = 15 * 60 * 1000;
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function verificationHash(email: string, code: string) {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error('Сервер авторизации не настроен');
+  return createHmac('sha256', secret).update(`${email}:${code}`).digest('hex');
+}
+
+function hashesMatch(left: string, right: string) {
+  const leftBuffer = Buffer.from(left, 'hex');
+  const rightBuffer = Buffer.from(right, 'hex');
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+export async function sendVerificationCode(rawEmail: string) {
+  const email = normalizeEmail(rawEmail);
+  if (!emailPattern.test(email)) return { error: 'Неверный формат email' };
+
   try {
-    const mailOptions = {
+    const requestHeaders = await headers();
+    const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || requestHeaders.get('x-real-ip') || 'local';
+    const [emailLimit, ipLimit] = await Promise.all([
+      consumeRateLimit('verification-email', email, 3, verificationLifetimeMs),
+      consumeRateLimit('verification-ip', ip, 20, verificationLifetimeMs),
+    ]);
+    if (!emailLimit.allowed || !ipLimit.allowed) {
+      return { error: 'Слишком много запросов. Попробуйте позже.' };
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (existingUser) return { success: true };
+
+    const code = randomInt(100000, 1000000).toString();
+    await prisma.emailVerification.upsert({
+      where: { email },
+      create: {
+        email,
+        tokenHash: verificationHash(email, code),
+        expiresAt: new Date(Date.now() + verificationLifetimeMs),
+      },
+      update: {
+        tokenHash: verificationHash(email, code),
+        expiresAt: new Date(Date.now() + verificationLifetimeMs),
+        sentAt: new Date(),
+        attempts: 0,
+      },
+    });
+
+    await transporter.sendMail({
       from: `"Сокровища Народов" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: 'Код подтверждения регистрации',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #FF7340; font-size: 28px; margin: 0;">Сокровища Народов</h1>
-            <p style="color: #666; font-size: 16px;">Подтверждение email адреса</p>
-          </div>
-          
-          <div style="background-color: #f9f9f9; padding: 30px; border-radius: 8px; text-align: center;">
-            <h2 style="color: #333; font-size: 20px; margin-bottom: 20px;">
-              Ваш код подтверждения
-            </h2>
-            
-            <div style="background: linear-gradient(135deg, #FF7340, #FF8A5C); padding: 20px; border-radius: 8px;">
-              <span style="font-size: 30px; font-weight: bold; letter-spacing: 8px; color: white;">
-                ${code}
-              </span>
-            </div>
-            
-            <p style="color: #666; font-size: 14px; margin-top: 30px;">
-              Код действителен в течение 15 минут.
-            </p>
-          </div>
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; text-align: center;">
-            <p>Если вы не запрашивали этот код, просто проигнорируйте это письмо.</p>
-          </div>
-        </div>
-      `,
-      text: `Ваш код подтверждения: ${code}\nКод действителен в течение 15 минут.`,
-    };
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px"><h1 style="color:#FF7340">Сокровища Народов</h1><p>Ваш код подтверждения:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${code}</p><p>Код действителен 15 минут.</p></div>`,
+      text: `Ваш код подтверждения: ${code}\nКод действителен 15 минут.`,
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Код подтверждения отправлен:', info.messageId);
-    
     return { success: true };
   } catch (error) {
     console.error('Ошибка отправки кода:', error);
-    return { 
-      error: 'Не удалось отправить код подтверждения. Попробуйте позже.' 
-    };
+    await prisma.emailVerification.deleteMany({ where: { email } }).catch(() => undefined);
+    return { error: 'Не удалось отправить код подтверждения. Попробуйте позже.' };
   }
 }
 
-export async function createUser(
-  data: RegisterData
-) {
+export async function createUser(data: RegisterData, verificationCode: string) {
   try {
     const errors: string[] = [];
 
@@ -111,45 +132,76 @@ export async function createUser(
       return { error: errors.join(". ") };
     }
 
-    if (data.password.length < 6) {
-      return { error: 'Пароль должен содержать минимум 6 символов' };
+    if (data.password.length < 8 || data.password.length > 128) {
+      return { error: 'Пароль должен содержать от 8 до 128 символов' };
     }
 
     if (data.confirmPassword && data.password !== data.confirmPassword) {
       return { error: 'Пароли не совпадают' };
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
+    const email = normalizeEmail(data.email);
+    if (!emailPattern.test(email)) {
       return { error: 'Неверный формат email' };
     }
 
     if (data.age < 6 || data.age > 120) {
       return { error: 'Возраст должен быть от 6 до 120 лет' };
     }
+    if (data.firstName.trim().length > 80 || data.lastName.trim().length > 80) {
+      return { error: 'Имя или фамилия слишком длинные' };
+    }
+    if (data.phone.trim().length > 30) {
+      return { error: 'Номер телефона слишком длинный' };
+    }
 
-    // Проверка существующего пользователя
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email }
+      where: { email }
     });
 
     if (existingUser) {
-      return { error: 'Пользователь с таким email уже существует' };
+      return { error: 'Не удалось завершить регистрацию' };
     }
 
-    // Создаем пользователя
+    const verification = await prisma.emailVerification.findUnique({ where: { email } });
+    if (!verification || verification.expiresAt <= new Date() || verification.attempts >= 5) {
+      return { error: 'Код истёк. Запросите новый код.' };
+    }
+
+    const claimedAttempt = await prisma.emailVerification.updateMany({
+      where: {
+        email,
+        tokenHash: verification.tokenHash,
+        expiresAt: { gt: new Date() },
+        attempts: { lt: 5 },
+      },
+      data: { attempts: { increment: 1 } },
+    });
+    if (claimedAttempt.count !== 1) return { error: 'Код истёк. Запросите новый код.' };
+
+    const submittedHash = verificationHash(email, verificationCode.trim());
+    if (!hashesMatch(verification.tokenHash, submittedHash)) {
+      return { error: 'Неверный код подтверждения' };
+    }
+
     const hashedPassword = await hash(data.password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        email: data.email.trim(),
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        age: data.age,
-        phone: data.phone.trim(),
-        password: hashedPassword,
-        role: 'USER',
-      }
+    const user = await prisma.$transaction(async (transaction) => {
+      const createdUser = await transaction.user.create({
+        data: {
+          email,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+          age: data.age,
+          phone: data.phone.trim(),
+          password: hashedPassword,
+          role: 'USER',
+          verified: true,
+          emailVerified: new Date(),
+        }
+      });
+      await transaction.emailVerification.delete({ where: { email } });
+      return createdUser;
     });
 
     const { password, ...userWithoutPassword } = user;
@@ -162,17 +214,19 @@ export async function createUser(
 
   } catch (error: any) {
     console.error(error);
-    
+
     if (error.code === 'P2002') {
       return { error: 'Пользователь с таким email уже существует' };
     }
-    
+
     return { error: 'Произошла ошибка при регистрации. Попробуйте позже.' };
   }
 }
 
 export async function getUserById(id: string): Promise<UserWithRelations | null> {
   try {
+    const session = await getServerSession(authOptions);
+    const canSeePrivateData = session?.user?.id === id || session?.user?.role === 'ADMIN';
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -190,6 +244,7 @@ export async function getUserById(id: string): Promise<UserWithRelations | null>
         createdAt: true,
         updatedAt: true,
         posts: {
+          where: canSeePrivateData ? undefined : { status: 'approved' },
           take: 10,
           orderBy: { createdAt: 'desc' },
           select: {
@@ -244,6 +299,11 @@ export async function getUserById(id: string): Promise<UserWithRelations | null>
 
     if (!user) return null;
 
+    if (!canSeePrivateData) {
+      const { email, phone, age, role, ...publicUser } = user;
+      return publicUser as any;
+    }
+
     return user as any;
   } catch (error) {
     console.error(error);
@@ -254,7 +314,7 @@ export async function getUserById(id: string): Promise<UserWithRelations | null>
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return null;
     }
@@ -306,7 +366,7 @@ export async function updateProfile(data: {
 }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return { error: 'Не авторизован' };
     }
@@ -321,6 +381,11 @@ export async function updateProfile(data: {
     if (data.age && (data.age < 6 || data.age > 120)) {
       return { error: 'Возраст должен быть от 6 до 120 лет' };
     }
+    if (data.firstName && data.firstName.trim().length > 80) return { error: 'Имя слишком длинное' };
+    if (data.lastName && data.lastName.trim().length > 80) return { error: 'Фамилия слишком длинная' };
+    if (data.phone && data.phone.trim().length > 30) return { error: 'Номер телефона слишком длинный' };
+    if (data.bio && data.bio.trim().length > 2000) return { error: 'Описание слишком длинное' };
+    if (data.region && data.region.trim().length > 120) return { error: 'Название региона слишком длинное' };
 
     const updateData: any = {};
 
@@ -354,7 +419,7 @@ export async function updateProfile(data: {
 
     revalidatePath('/profile');
     revalidatePath('/settings');
-    
+
     return {
       success: true,
       user: updatedUser,
@@ -369,7 +434,7 @@ export async function updateProfile(data: {
 export async function deleteAccount(password: string) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return { error: 'Не авторизован' };
     }
@@ -384,7 +449,7 @@ export async function deleteAccount(password: string) {
     }
 
     const isValid = await compare(password, user.password);
-    
+
     if (!isValid) {
       return { error: 'Неверный пароль' };
     }
@@ -407,9 +472,9 @@ export async function deleteAccount(password: string) {
       })
     ]);
 
-    return { 
-      success: true, 
-      message: 'Аккаунт успешно удален' 
+    return {
+      success: true,
+      message: 'Аккаунт успешно удален'
     };
   } catch (error) {
     console.error(error);
@@ -420,13 +485,13 @@ export async function deleteAccount(password: string) {
 export async function updateAvatar(formData: FormData) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return { error: 'Не авторизован' };
     }
 
     const file = formData.get('avatar') as File;
-    
+
     if (!file) {
       return { error: 'Файл не выбран' };
     }
@@ -435,17 +500,16 @@ export async function updateAvatar(formData: FormData) {
       return { error: 'Можно загружать только изображения' };
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       return { error: 'Размер файла не должен превышать 5MB' };
     }
 
-    const uploadedFile = await uploadFile(file);
-    
+    const uploadedFile = await uploadFile(file, 'image');
+
     if (!uploadedFile?.url) {
       return { error: 'Не удалось загрузить файл' };
     }
 
-    // Обновляем аватар пользователя
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: { avatar: uploadedFile.url },
@@ -467,7 +531,7 @@ export async function updateAvatar(formData: FormData) {
 
     revalidatePath('/profile');
     revalidatePath(`/profile/${session.user.id}`);
-    
+
     return {
       success: true,
       user: updatedUser,
@@ -482,7 +546,7 @@ export async function updateAvatar(formData: FormData) {
 export async function removeAvatar() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return { error: 'Не авторизован' };
     }
@@ -508,7 +572,7 @@ export async function removeAvatar() {
 
     revalidatePath('/profile');
     revalidatePath(`/profile/${session.user.id}`);
-    
+
     return {
       success: true,
       user: updatedUser,

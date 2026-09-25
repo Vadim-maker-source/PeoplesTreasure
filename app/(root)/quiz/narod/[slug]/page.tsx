@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Trophy,
   RefreshCw,
@@ -36,10 +36,10 @@ export default function QuizPage() {
           setUser(currentUser)
         }
       }
-  
+
       checkAuth()
     }, [])
-  
+
   const [ethnicGroup, setEthnicGroup] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -53,19 +53,19 @@ export default function QuizPage() {
     setIsLoading(true);
     try {
       const group = peoples.find(p => p.id === quizId);
-      
+
       if (!group) {
         toast.error(`Народ с ID "${quizId}" не найден`);
         router.push('/');
         return;
       }
-      
+
       setEthnicGroup(group);
-      
+
       const quizQuestions = getRandomQuestions(group.id);
       setQuestions(quizQuestions);
       setAnswers(new Array(quizQuestions.length).fill(null));
-      
+
       const saved = localStorage.getItem(`quiz_progress_${group.id}`);
       if (saved) {
         const progress = JSON.parse(saved);
@@ -77,10 +77,10 @@ export default function QuizPage() {
           setCurrentQuestion(progress.currentQuestion || 0);
         }
       }
-      
+
       setTimerActive(true);
       setTimer(0);
-      
+
     } catch (error) {
       console.error(error);
       toast.error('Не удалось загрузить тест');
@@ -93,7 +93,7 @@ export default function QuizPage() {
     if (quizId) {
       loadQuiz();
       const createTest = async () => {
-        await getOrCreateTest(String(user?.id), quizId, ethnicGroup)
+        await getOrCreateTest(quizId, ethnicGroup)
       }
       createTest()
     }
@@ -101,13 +101,13 @@ export default function QuizPage() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (timerActive && !showResult) {
       interval = setInterval(() => {
         setTimer(prev => prev + 1);
       }, 1000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -146,21 +146,20 @@ export default function QuizPage() {
   };
 
   const handleComplete = async () => {
-    const correctAnswers = answers.filter((answer, index) => 
+    const correctAnswers = answers.filter((answer, index) =>
       answer === questions[index].correctAnswer
     ).length;
-    
+
     const totalQuestions = questions.length;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
     const passed = correctAnswers === totalQuestions;
-    
+
     const testAnswers = answers.map((answer, index) => ({
-      questionId: index,
+      questionId: questions[index].id,
       selectedAnswer: answer!,
-      correctAnswer: questions[index].correctAnswer,
-      isCorrect: answer === questions[index].correctAnswer,
+      selectedOption: answer == null ? '' : questions[index].options[answer],
     }));
-    
+
     const testResults = {
       score: correctAnswers,
       total: totalQuestions,
@@ -168,10 +167,10 @@ export default function QuizPage() {
       passed,
       answers: testAnswers,
     };
-  
+
     try {
       const result = await submitTestResults(quizId, ethnicGroup.name, testResults);
-      
+
       if (result.success) {
         toast.success('Результаты сохранены!');
         if (result.passed) {
@@ -184,10 +183,10 @@ export default function QuizPage() {
       console.error(error);
       toast.error('Произошла ошибка при сохранении результатов');
     }
-    
+
     setTimerActive(false);
     setShowResult(true);
-    
+
     if (ethnicGroup) {
       localStorage.removeItem(`quiz_progress_${ethnicGroup.id}`);
     }
@@ -241,7 +240,7 @@ export default function QuizPage() {
               <span>Вернуться к народам</span>
             </Link>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-[#FFC873]">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Тест не найден
@@ -262,10 +261,10 @@ export default function QuizPage() {
   }
 
   if (showResult && questions.length > 0) {
-    const correctAnswers = answers.filter((answer, index) => 
+    const correctAnswers = answers.filter((answer, index) =>
       answer === questions[index].correctAnswer
     ).length;
-    
+
     const totalQuestions = questions.length;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
     const passed = correctAnswers === totalQuestions;
@@ -294,19 +293,19 @@ export default function QuizPage() {
                   )}
                 </div>
               </div>
-              
+
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {passed ? 'Поздравляем! 🎉' : 'Попробуйте еще раз!'}
               </h1>
               <h2 className="text-2xl font-semibold text-[#FF7340] mb-4">
                 {ethnicGroup.name}
               </h2>
-              
+
               <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-lg font-bold mb-4 bg-linear-to-r from-[#FFC873] to-[#FFB840] text-white shadow-md">
                 <Trophy size={20} />
                 <span>{correctAnswers} из {totalQuestions} правильных</span>
               </div>
-              
+
               <div className="flex items-center justify-center gap-4 text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock size={18} />
@@ -326,7 +325,7 @@ export default function QuizPage() {
                   const isCorrect = answer === question.correctAnswer;
                   const selectedOption = answer !== null && answer !== undefined ? question.options[answer] : 'Нет ответа';
                   const correctOption = question.options[question.correctAnswer];
-                  
+
                   return (
                     <div
                       key={index}
@@ -335,8 +334,8 @@ export default function QuizPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            isCorrect 
-                              ? 'bg-[#07df00] text-white' 
+                            isCorrect
+                              ? 'bg-[#07df00] text-white'
                               : 'bg-[#FF7340] text-white'
                           }`}>
                             <span className="font-bold">{index + 1}</span>
@@ -346,16 +345,16 @@ export default function QuizPage() {
                           </span>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          isCorrect 
-                            ? 'bg-[#07df00] text-white' 
+                          isCorrect
+                            ? 'bg-[#07df00] text-white'
                             : 'bg-[#FF7340] text-white'
                         }`}>
                           {isCorrect ? <div className="flex items-center"><img src="/images/Done.svg" className="w-5 aspect-square" /> Правильно </div> : <div className="flex items-center"><img src="/images/x.svg" className="w-5 aspect-square" /> Неправильно </div>}
                         </span>
                       </div>
-                      
+
                       <p className="font-medium text-gray-800 mb-3">{question.text}</p>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div className={`p-3 rounded-lg ${isCorrect ? 'bg-[#F8F0FF] border border-[#C873FF]' : 'bg-[#FFF0F0] border border-[#FF7340]'}`}>
                           <p className="text-sm font-medium text-gray-700 mb-1">Ваш ответ:</p>
@@ -363,7 +362,7 @@ export default function QuizPage() {
                             {selectedOption}
                           </p>
                         </div>
-                        
+
                         {!isCorrect && (
                           <div className="p-3 rounded-lg bg-[#F8F0FF] border border-[#C873FF]">
                             <p className="text-sm font-medium text-gray-700 mb-1">Правильный ответ:</p>
@@ -371,7 +370,7 @@ export default function QuizPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       {question.explanation && !isCorrect && (
                         <div className="mt-2 p-3 bg-linear-to-r from-[#FFC873] to-[#FFB840] border border-[#FFC873] rounded-lg">
                           <p className="text-white">
@@ -394,7 +393,7 @@ export default function QuizPage() {
                   <RefreshCw size={18} />
                   Пройти заново
                 </button>
-                
+
                 <button
                   onClick={handleContinueLearning}
                   className="flex items-center justify-center gap-2 px-6 py-3 bg-[#FFB840] hover:opacity-80 text-white font-semibold rounded-lg transition-all cursor-pointer duration-200"
@@ -402,7 +401,7 @@ export default function QuizPage() {
                   <ArrowLeft size={18} />
                   Изучить материал
                 </button>
-                
+
                 <Link
                   href="/"
                   className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-[#FFC873] hover:border-[#FFB840] text-gray-700 hover:text-gray-900 font-semibold rounded-lg transition-colors"
@@ -430,7 +429,7 @@ export default function QuizPage() {
   }
 
   const currentQ = questions[currentQuestion];
-  
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -442,7 +441,7 @@ export default function QuizPage() {
             <ArrowLeft size={20} />
             <span>Назад к {ethnicGroup.name}</span>
           </Link>
-          
+
           <div className="flex items-center gap-2 bg-linear-to-r from-[#FFC873] to-[#FFB840] text-white px-3 py-1 rounded-full">
             <Clock size={16} />
             <span className="font-medium">{formatTime(timer)}</span>
@@ -476,7 +475,7 @@ export default function QuizPage() {
               style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
             />
           </div>
-          
+
           <div className="flex justify-center gap-2">
             {questions.map((_, index) => (
               <div
@@ -485,8 +484,8 @@ export default function QuizPage() {
                   index === currentQuestion
                     ? 'bg-[#FF7340] scale-125'
                     : index < currentQuestion
-                    ? answers[index] !== null 
-                      ? 'bg-[#FFCB73]' 
+                    ? answers[index] !== null
+                      ? 'bg-[#FFCB73]'
                       : 'bg-gray-300'
                     : 'bg-gray-200'
                 }`}
@@ -507,7 +506,7 @@ export default function QuizPage() {
                 </span>
               )}
             </div>
-            
+
             <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-8">
               {currentQ.text}
             </h2>
@@ -515,7 +514,7 @@ export default function QuizPage() {
             <div className="space-y-3 mb-8">
               {currentQ.options.map((option, index) => {
                 const isSelected = answers[currentQuestion] === index;
-                
+
                 return (
                   <button
                     key={index}
@@ -538,11 +537,11 @@ export default function QuizPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="grow">
                         <span className="text-gray-800 text-lg">{option}</span>
                       </div>
-                      
+
                         <div className="ml-3 shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium group-hover:bg-[#FFE0C2] group-hover:text-[#FF7340] transition-colors">
                           {index + 1}
                         </div>
@@ -565,7 +564,7 @@ export default function QuizPage() {
                 <ChevronLeft size={20} />
                 Назад
               </button>
-              
+
               <div className="text-sm">
                 {answers[currentQuestion] === null || answers[currentQuestion] === undefined ? (
                   <span className="text-[#FF7340] font-medium">Выберите ответ</span>
@@ -573,7 +572,7 @@ export default function QuizPage() {
                   <span className="text-[#FFCB73] font-medium">✓ Ответ сохранен</span>
                 )}
               </div>
-              
+
               <button
                 onClick={handleNext}
                 disabled={answers[currentQuestion] === null || answers[currentQuestion] === undefined}
@@ -587,7 +586,7 @@ export default function QuizPage() {
                 <ChevronRight size={20} />
               </button>
             </div>
-            
+
             {currentQuestion === questions.length - 1 && answers[currentQuestion] !== null && (
               <div className="mt-4 p-3 bg-linear-to-r from-[#FFC873] to-[#FFB840] border border-[#FFC873] rounded-lg">
                 <p className="text-white text-center font-medium">

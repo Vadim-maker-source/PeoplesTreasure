@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "windows", "linux-musl", "debian-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -36,106 +36,159 @@ model Session {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  emailVerified DateTime?
-  firstName    String
-  lastName     String
-  age          Int
-  phone        String
-  password     String?
-  avatar       String?
-  region       String?
-  bio          String?
-  role         String    @default("USER")
-  verified     Boolean  @default(false)
-  unreadSupportCount Int? @default(0)
-  
-  accounts      Account[]
-  sessions      Session[]
-  posts         Post[]
-  comments      Comment[]
-  courses       Course[]
-  support       Support[]
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  emailVerified      DateTime?
+  firstName          String
+  lastName           String
+  age                Int
+  phone              String
+  password           String?
+  avatar             String?
+  region             String?
+  bio                String?
+  role               String    @default("USER")
+  verified           Boolean   @default(false)
+  unreadSupportCount Int?      @default(0)
+
+  accounts            Account[]
+  sessions            Session[]
+  posts               Post[]
+  comments            Comment[]
+  postLikes           PostLike[]
+  courses             Course[]
+  support             Support[]
+  mobileRefreshTokens MobileRefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
 model Post {
-  id           String   @id @default(cuid())
-  title        String
-  content      String
-  authorId     String
+  id            String   @id @default(cuid())
+  title         String
+  content       String
+  authorId      String
   ethnicGroupId String?
-  images       String[]
-  tags         String[]
-  likes        Int      @default(0)
-  status       String   @default("pending")
-  
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  images        String[]
+  tags          String[]
+  likes         Int      @default(0)
+  status        String   @default("pending")
+
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments    Comment[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  likeRecords PostLike[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("posts")
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  authorId  String
-  postId    String
-  
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(cuid())
+  content  String
+  authorId String
+  postId   String
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("comments")
 }
 
 model Course {
-  id           String   @id @default(cuid())
-  userId       String
-  ethnicGroupId String
+  id              String  @id @default(cuid())
+  userId          String
+  ethnicGroupId   String
   ethnicGroupName String
-  completed    Boolean  @default(false)
-  score        Int      @default(0)
-  answers      Json?
-  certificateUrl String?
-  
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  completedAt  DateTime?
-  
+  completed       Boolean @default(false)
+  score           Int     @default(0)
+  answers         Json?
+  certificateUrl  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
   @@unique([userId, ethnicGroupId])
   @@map("courses")
 }
 
 model Support {
-  id             String   @id @default(cuid())
-  userId         String
-  subject        String
-  message        String
-  answer         String?
-  status         String   @default("pending")
-  isReadByUser   Boolean  @default(false)
-  isReadByAdmin  Boolean  @default(false)
-  
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
+  id            String  @id @default(cuid())
+  userId        String
+  subject       String
+  message       String
+  answer        String?
+  status        String  @default("pending")
+  isReadByUser  Boolean @default(false)
+  isReadByAdmin Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
   @@index([isReadByUser])
+}
+
+model PostLike {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+model EmailVerification {
+  email     String   @id
+  tokenHash String
+  expiresAt DateTime
+  sentAt    DateTime @default(now())
+  attempts  Int      @default(0)
+
+  @@index([expiresAt])
+  @@map("email_verifications")
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("rate_limits")
+}
+
+model MobileRefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  device    String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("mobile_refresh_tokens")
 }

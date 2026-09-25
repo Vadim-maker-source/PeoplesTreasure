@@ -4,6 +4,11 @@ import YandexProvider from "next-auth/providers/yandex";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 import { compare } from "bcryptjs";
+import { consumeRateLimit, resetRateLimit } from "./rate-limit";
+
+const dummyPasswordHash = "$2b$12$QIKiKM4ZxmrKKb.v0ds0Ouu3hoIKwwvD2WjbbE5UWHvGWp.cW4wBG";
+const authSecret = process.env.NEXTAUTH_SECRET;
+if (!authSecret || authSecret.length < 32) throw new Error("NEXTAUTH_SECRET должен содержать не менее 32 символов");
 
 declare module "next-auth" {
   interface Session {
@@ -33,13 +38,13 @@ declare module "next-auth/jwt" {
 
 const customAdapter = {
   ...PrismaAdapter(prisma),
-  
+
   createUser: async (data: any) => {
     const { name, email, emailVerified, image, ...rest } = data;
-    
+
     let firstName = '';
     let lastName = '';
-    
+
     if (name) {
       const nameParts = name.split(' ');
       firstName = nameParts[0] || '';
@@ -120,10 +125,10 @@ const customAdapter = {
 
   updateUser: async (data: any) => {
     const { id, name, ...rest } = data;
-    
+
     let firstName = '';
     let lastName = '';
-    
+
     if (name) {
       const nameParts = name.split(' ');
       firstName = nameParts[0] || '';
@@ -170,15 +175,15 @@ export const authOptions: NextAuthOptions = {
           age: 0,
           phone: profile.default_phone?.number || '',
           role: 'USER',
-          avatar: profile.default_avatar_id 
-            ? `https://avatars.yandex.net/get-yapic/${profile.default_avatar_id}/islands-200` 
+          avatar: profile.default_avatar_id
+            ? `https://avatars.yandex.net/get-yapic/${profile.default_avatar_id}/islands-200`
             : null,
           region: '',
           bio: '',
         };
       },
     }),
-    
+
     CredentialsProvider({
       id: "credentials",
       name: "credentials",
@@ -186,25 +191,39 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials): Promise<User | null> {
+      async authorize(credentials, request): Promise<User | null> {
         try {
           if (!credentials?.email || !credentials?.password) {
-            throw new Error("Email и пароль обязательны");
+            return null;
           }
 
+          const email = credentials.email.trim().toLowerCase();
+          const forwardedFor = request.headers?.["x-forwarded-for"];
+          const ip = Array.isArray(forwardedFor)
+            ? forwardedFor[0]
+            : forwardedFor?.split(",")[0]?.trim() || request.headers?.["x-real-ip"] || "local";
+          const [emailLimit, ipLimit] = await Promise.all([
+            consumeRateLimit("login-email", email, 5, 15 * 60 * 1000),
+            consumeRateLimit("login-ip", String(ip), 30, 15 * 60 * 1000),
+          ]);
+          if (!emailLimit.allowed || !ipLimit.allowed) return null;
+
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+            where: { email }
           });
 
           if (!user || !user.password) {
-            throw new Error("Пользователь не найден");
+            await compare(credentials.password, dummyPasswordHash);
+            return null;
           }
 
           const isValid = await compare(credentials.password, user.password);
 
           if (!isValid) {
-            throw new Error("Неверный пароль");
+            return null;
           }
+
+          await resetRateLimit("login-email", email);
 
           return {
             id: user.id,
@@ -219,8 +238,7 @@ export const authOptions: NextAuthOptions = {
             region: user.region || "",
             bio: user.bio || "",
           } as User;
-        } catch (error) {
-          console.error(error);
+        } catch {
           return null;
         }
       }
@@ -233,11 +251,19 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.email = user.email;
       }
-      
+
+      if (token.id) {
+        const currentUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { role: true },
+        });
+        if (currentUser) token.role = currentUser.role;
+      }
+
       if (account) {
         token.accessToken = account.access_token;
       }
-      
+
       return token;
     },
     async session({ session, token }) {
@@ -278,7 +304,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    
+
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
@@ -292,6 +318,6 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development',
+  secret: authSecret,
+  debug: false,
 };

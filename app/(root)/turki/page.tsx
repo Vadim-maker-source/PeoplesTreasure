@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 const Turki = () => {
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const foodImages = [
     { src: '/images/tFood1.png', alt: '' },
     { src: '/images/tFood2.jpg', alt: '' },
@@ -25,7 +25,7 @@ const Turki = () => {
   };
 
   const [currentSuiteSlide, setCurrentSuiteSlide] = useState(0);
-  
+
   const suiteImages = [
     { src: '/images/tSuit1.jpg', alt: 'дэгэл' },
     { src: '/images/tSuit2.jpg', alt: 'цегдег' },
@@ -154,7 +154,7 @@ const Turki = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <button
               onClick={nextSlide}
               className="absolute cursor-pointer right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110"
@@ -171,8 +171,8 @@ const Turki = () => {
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentSlide 
-                      ? 'bg-white scale-125' 
+                    index === currentSlide
+                      ? 'bg-white scale-125'
                       : 'bg-white/60 hover:bg-white/80'
                   }`}
                   aria-label={`Перейти к слайду ${index + 1}`}
@@ -222,7 +222,7 @@ const Turki = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <button
               onClick={nextSuiteSlide}
               className="absolute cursor-pointer right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110"
@@ -239,8 +239,8 @@ const Turki = () => {
                   key={index}
                   onClick={() => goToSuiteSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentSuiteSlide 
-                      ? 'bg-white scale-125' 
+                    index === currentSuiteSlide
+                      ? 'bg-white scale-125'
                       : 'bg-white/60 hover:bg-white/80'
                   }`}
                   aria-label={`Перейти к слайду ${index + 1}`}

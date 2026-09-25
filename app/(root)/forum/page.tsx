@@ -34,7 +34,7 @@ export default function Forum() {
       return newMap;
     });
   };
-  
+
   const handleVideoEnded = (postId: string) => {
     setAutoplayStates(prev => {
       const newMap = new Map(prev);
@@ -42,7 +42,7 @@ export default function Forum() {
       return newMap;
     });
   };
-  
+
   const handleSlideChange = (postId: string) => {
     setAutoplayStates(prev => {
       const newMap = new Map(prev);
@@ -50,14 +50,14 @@ export default function Forum() {
       return newMap;
     });
   };
-  
+
   const router = useRouter();
 
   const fetchPosts = async () => {
     setIsLoading(true);
     try {
       let result;
-      
+
       if (selectedEthnicGroup === 'all') {
         result = await getAllPosts(currentPage, 10, sortBy);
       } else {
@@ -83,28 +83,28 @@ export default function Forum() {
     }
 
     const lowercasedQuery = query.toLowerCase().trim();
-    
+
     const filtered = posts.filter(post => {
       if (post.title.toLowerCase().includes(lowercasedQuery)) {
         return true;
       }
-      
+
       const authorFullName = `${post.author.firstName} ${post.author.lastName}`.toLowerCase();
       if (authorFullName.includes(lowercasedQuery)) {
         return true;
       }
-      
-      const hasMatchingTag = post.tags.some(tag => 
+
+      const hasMatchingTag = post.tags.some(tag =>
         tag.toLowerCase().includes(lowercasedQuery)
       );
       if (hasMatchingTag) {
         return true;
       }
-      
+
       if (post.content.toLowerCase().includes(lowercasedQuery)) {
         return true;
       }
-      
+
       return false;
     });
 
@@ -138,9 +138,9 @@ export default function Forum() {
 
   const sortedPosts = useMemo(() => {
     const postsToSort = [...filteredPosts];
-    
+
     if (sortBy === 'newest') {
-      return postsToSort.sort((a, b) => 
+      return postsToSort.sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     } else {
@@ -152,7 +152,7 @@ export default function Forum() {
     const now = new Date();
     const postDate = new Date(date);
     const diffInHours = Math.floor((now.getTime() - postDate.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 24) {
       return `${diffInHours} ч. назад`;
     } else if (diffInHours < 168) {
@@ -172,30 +172,30 @@ export default function Forum() {
       if (result.success) {
         const updatedPosts = posts.map(post => {
           if (post.id !== postId) return post;
-          
+
           const updatedPost: PostWithAuthor = {
             ...post,
             likes: typeof result.likes === 'number' ? result.likes : post.likes,
             likedByUser: typeof result.liked === 'boolean' ? result.liked : post.likedByUser
           };
-          
+
           return updatedPost;
         });
-        
+
         setPosts(updatedPosts);
-        
+
         const updatedFilteredPosts = filteredPosts.map(post => {
           if (post.id !== postId) return post;
-          
+
           const updatedPost: PostWithAuthor = {
             ...post,
             likes: typeof result.likes === 'number' ? result.likes : post.likes,
             likedByUser: typeof result.liked === 'boolean' ? result.liked : post.likedByUser
           };
-          
+
           return updatedPost;
         });
-        
+
         setFilteredPosts(updatedFilteredPosts);
       } else {
         if (result.isAuthError) {
@@ -269,11 +269,11 @@ export default function Forum() {
 
   return (
     <div className="min-h-screen">
-      {/* Панель фильтров и сортировки */}
+
       <div className="sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            {/* Фильтр по народам */}
+
             <div className="flex-1 w-full md:w-auto">
   <div className="flex items-center gap-2">
     <span className="text-gray-700 font-medium">Народ:</span>
@@ -299,15 +299,14 @@ export default function Forum() {
   </div>
 </div>
 
-            {/* Поиск */}
             <div className="relative w-full md:w-auto">
   <div className="relative">
     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
       <FontAwesomeIcon icon={faMagnifyingGlass} className="text-gray-400" />
     </div>
-    <input 
-      type="text" 
-      placeholder="Ищите по названию, автору или хештегам..." 
+    <input
+      type="text"
+      placeholder="Ищите по названию, автору или хештегам..."
       value={searchQuery}
       onChange={handleSearchChange}
       className="w-full md:w-80 pl-10 pr-4 py-2 rounded-xl bg-[#FFF0F0] text-gray-700 border-none focus:ring-2 focus:ring-orange-300 outline-none placeholder-gray-500"
@@ -328,7 +327,6 @@ export default function Forum() {
   )}
 </div>
 
-            {/* Сортировка */}
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-gray-700 font-medium">Сортировка:</span>
@@ -357,9 +355,8 @@ export default function Forum() {
         </div>
       </div>
 
-      {/* Лента постов */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Статистика и информация о сортировке */}
+
         <div className="mb-8 flex justify-between items-center">
           <p className="text-gray-600">
             {searchQuery ? (
@@ -376,7 +373,6 @@ export default function Forum() {
           </div>
         </div>
 
-        {/* Сообщение если нет результатов поиска */}
         {searchQuery && filteredPosts.length === 0 && (
           <div className="text-center py-8 mb-8">
             <div className="text-4xl mb-4"><FontAwesomeIcon icon={faMagnifyingGlass} /></div>
@@ -395,11 +391,10 @@ export default function Forum() {
           </div>
         )}
 
-        {/* Посты */}
         <div className="space-y-8">
           {sortedPosts.map((post) => (
             <div key={post.id} className="bg-white px-4 md:px-6 lg:px-8 pt-4 md:pt-6 lg:pt-8 rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-              {/* Шапка поста */}
+
               <div className="mb-4 md:mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -429,11 +424,10 @@ export default function Forum() {
                     </span>
                   </div>
                 </div>
-                
+
                 <h2 className="text-xl font-bold text-gray-900">{post.title}</h2>
               </div>
 
-              {/* Слайдер изображений */}
               {post.images.length > 0 && (
   <div className="relative">
     <Swiper
@@ -447,7 +441,7 @@ export default function Forum() {
     >
       {post.images.map((mediaUrl, index) => (
         <SwiperSlide key={index}>
-          <div 
+          <div
             className="relative h-full w-full cursor-pointer"
             onClick={() => setSelectedImage(mediaUrl)}
           >
@@ -482,9 +476,8 @@ export default function Forum() {
   </div>
 )}
 
-              {/* Увеличенное изображение */}
               {selectedImage && (
-                <div 
+                <div
                   className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
                   onClick={() => setSelectedImage(null)}
                 >
@@ -505,7 +498,6 @@ export default function Forum() {
                 </div>
               )}
 
-              {/* Контент поста */}
               <div className="pt-4">
                 <p className="text-gray-700 mb-6 line-clamp-3">
                   {post.content}
@@ -519,7 +511,6 @@ export default function Forum() {
                   ))}
                 </div>
 
-                {/* Кнопки взаимодействия */}
                 <div className="flex items-center justify-between py-4 border-t border-gray-100">
                   <div className="flex items-center gap-6">
                     <button
@@ -527,29 +518,29 @@ export default function Forum() {
                       className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer"
                     >
                       <span className="text-2xl">
-                        {post.likedByUser ? 
-                          <img src="/images/likefill.svg" alt="Лайк" className="aspect-square w-6" /> : 
+                        {post.likedByUser ?
+                          <img src="/images/likefill.svg" alt="Лайк" className="aspect-square w-6" /> :
                           <img src="/images/like.svg" alt="Лайк" className="aspect-square w-6" />
                         }
                       </span>
                       <span className="font-medium">{post.likes}</span>
                     </button>
-                    
+
                     <button className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer">
                       <img src="/images/comments.svg" alt="Комментарии" className="aspect-square w-6" />
                       <span className="font-medium">{post.commentsCount}</span>
                     </button>
-                    
-                    <button 
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer" 
+
+                    <button
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer"
                       onClick={() => handleCopyLink(post.id)}
                     >
                       <img src="/images/link.svg" alt="Ссылка" className="aspect-square w-6" />
                       <span className="font-medium">Ссылка</span>
                     </button>
                   </div>
-                  
-                  <Link 
+
+                  <Link
                     href={`/posts/${post.id}`}
                     className="text-[#FF7340] hover:text-[#FF4500] font-medium flex items-center gap-2"
                   >
@@ -561,7 +552,6 @@ export default function Forum() {
           ))}
         </div>
 
-        {/* Сообщение если нет постов */}
         {posts.length === 0 && !isLoading && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📝</div>
@@ -569,7 +559,7 @@ export default function Forum() {
               Пока нет постов
             </h3>
             <p className="text-gray-600 mb-6">
-              {selectedEthnicGroup !== 'all' 
+              {selectedEthnicGroup !== 'all'
                 ? `Пока никто не поделился информацией о народе "${getEthnicGroupName(selectedEthnicGroup)}"`
                 : 'Будьте первым, кто поделится знаниями о культуре народов России!'}
             </p>
@@ -581,7 +571,6 @@ export default function Forum() {
           </div>
         )}
 
-        {/* Пагинация - показываем только если нет активного поиска */}
         {!searchQuery && totalPages > 1 && (
           <div className="mt-12 flex justify-center">
             <nav className="flex items-center gap-2">
@@ -592,7 +581,7 @@ export default function Forum() {
               >
                 ← Назад
               </button>
-              
+
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -604,7 +593,7 @@ export default function Forum() {
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
-                
+
                 return (
                   <button
                     key={pageNum}
@@ -615,7 +604,7 @@ export default function Forum() {
                   </button>
                 );
               })}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}

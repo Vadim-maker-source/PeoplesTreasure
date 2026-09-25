@@ -38,7 +38,7 @@ export default function ModeratePage() {
     try {
       setProcessingId(postId);
       const result = await moderatePost(postId, action);
-      
+
       if (result.success) {
         toast.success(result.message);
         setPosts(prev => prev.filter(p => p.id !== postId));
@@ -89,7 +89,7 @@ export default function ModeratePage() {
   return (
     <div className="min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Заголовок */}
+
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Модерация постов
@@ -99,7 +99,6 @@ export default function ModeratePage() {
           </p>
         </div>
 
-        {/* Список постов на модерацию */}
         {posts.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">✅</div>
@@ -114,7 +113,7 @@ export default function ModeratePage() {
           <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                {/* Информация о посте */}
+
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -147,7 +146,6 @@ export default function ModeratePage() {
                     </div>
                   </div>
 
-                  {/* Слайдер медиа */}
                   {post.images.length > 0 && (
                     <div className="relative mb-4">
                       <Swiper
@@ -159,7 +157,7 @@ export default function ModeratePage() {
                       >
                         {post.images.map((mediaUrl, index) => (
                           <SwiperSlide key={index}>
-                            <div 
+                            <div
                               className="relative h-full w-full cursor-pointer"
                               onClick={() => setSelectedImage(mediaUrl)}
                             >
@@ -189,14 +187,12 @@ export default function ModeratePage() {
                     </div>
                   )}
 
-                  {/* Контент */}
                   <div className="mb-4">
                     <p className="text-gray-700 whitespace-pre-line">
                       {post.content}
                     </p>
                   </div>
 
-                  {/* Теги */}
                   {post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {post.tags.map((tag, index) => (
@@ -207,7 +203,6 @@ export default function ModeratePage() {
                     </div>
                   )}
 
-                  {/* Кнопки действий */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
                     <Link
                       href={`/posts/${post.id}`}
@@ -217,7 +212,7 @@ export default function ModeratePage() {
                       <Eye className="w-5 h-5" />
                       <span>Просмотр</span>
                     </Link>
-                    
+
                     <button
                       onClick={() => handleModerate(post.id, 'approve')}
                       disabled={processingId === post.id}
@@ -230,7 +225,7 @@ export default function ModeratePage() {
                       )}
                       <span>Одобрить</span>
                     </button>
-                    
+
                     <button
                       onClick={() => handleModerate(post.id, 'reject')}
                       disabled={processingId === post.id}
@@ -250,9 +245,8 @@ export default function ModeratePage() {
           </div>
         )}
 
-        {/* Модальное окно для увеличенного изображения */}
         {selectedImage && (
-          <div 
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
             onClick={() => setSelectedImage(null)}
           >

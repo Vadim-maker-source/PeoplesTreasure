@@ -4,13 +4,13 @@ import { getCurrentUser, getUserById, removeAvatar, updateAvatar, updateProfile 
 import { getUserCourses } from '@/app/lib/api/courses'
 import { useParams } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
-import { 
-  Edit, 
-  User as UserIcon, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
+import {
+  Edit,
+  User as UserIcon,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
   MessageSquare,
   ThumbsUp,
   FileText,
@@ -97,26 +97,25 @@ type UpdateFormData = {
 
 const ImageGallery = ({ images, title }: { images: string[], title: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // Функция для определения типа файла
+
   const isVideoFile = (url: string): boolean => {
     const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
     return videoExtensions.some(ext => url.toLowerCase().includes(ext));
   };
-  
+
   if (!images.length) return null;
-  
+
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
   };
-  
+
   const goToPrev = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
-  
+
   const currentMedia = images[currentIndex];
   const isVideo = isVideoFile(currentMedia);
-  
+
   return (
     <div className="relative mb-4 group">
       <div className="relative h-64 md:h-80 w-full rounded-lg overflow-hidden bg-gray-900">
@@ -125,7 +124,7 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
             src={currentMedia}
             controls
             className="h-full w-full object-contain"
-            poster="/images/video-poster.jpg" // Опционально: добавьте постер
+            poster="/images/video-poster.jpg"
           />
         ) : (
           <img
@@ -134,8 +133,7 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
             className="h-full w-full object-cover"
           />
         )}
-        
-        {/* Индикатор типа медиа */}
+
         <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
           {isVideo ? (
             <>
@@ -149,14 +147,13 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
             </>
           )}
         </div>
-        
-        {/* Кнопки навигации */}
+
         {images.length > 1 && (
           <>
             <button
               onClick={goToPrev}
               className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-opacity opacity-0 group-hover:opacity-100"
-              disabled={isVideo} // Можно отключить навигацию во время воспроизведения видео
+              disabled={isVideo}
             >
               <ChevronLeft size={20} />
             </button>
@@ -169,8 +166,7 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
             </button>
           </>
         )}
-        
-        {/* Счетчик */}
+
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
           <span>{currentIndex + 1} / {images.length}</span>
           {isVideo && (
@@ -180,8 +176,7 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
           )}
         </div>
       </div>
-      
-      {/* Миниатюры (превью) */}
+
       {images.length > 1 && (
         <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
           {images.map((media, index) => {
@@ -191,8 +186,8 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
                 key={index}
                 onClick={() => setCurrentIndex(index)}
                 className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
-                  index === currentIndex 
-                    ? 'ring-2 ring-[#FF7340] scale-105' 
+                  index === currentIndex
+                    ? 'ring-2 ring-[#FF7340] scale-105'
                     : 'opacity-70 hover:opacity-100'
                 }`}
               >
@@ -221,14 +216,14 @@ const ImageGallery = ({ images, title }: { images: string[], title: string }) =>
   );
 };
 
-const AvatarUploadModal = ({ 
-  isOpen, 
-  onClose, 
-  currentAvatar, 
-  onAvatarUpdate 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+const AvatarUploadModal = ({
+  isOpen,
+  onClose,
+  currentAvatar,
+  onAvatarUpdate
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   currentAvatar?: string | null;
   onAvatarUpdate: () => void;
 }) => {
@@ -241,13 +236,11 @@ const AvatarUploadModal = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Проверка типа файла
     if (!file.type.startsWith('image/')) {
       toast.error('Можно загружать только изображения');
       return;
     }
 
-    // Проверка размера (макс 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Размер файла не должен превышать 5MB');
       return;
@@ -270,7 +263,7 @@ const AvatarUploadModal = ({
       formData.append('avatar', selectedFile);
 
       const result = await updateAvatar(formData);
-      
+
       if (result.success) {
         toast.success('Аватар успешно обновлен');
         onAvatarUpdate();
@@ -289,7 +282,7 @@ const AvatarUploadModal = ({
     setIsUploading(true);
     try {
       const result = await removeAvatar();
-      
+
       if (result.success) {
         toast.success('Аватар удален');
         onAvatarUpdate();
@@ -320,19 +313,19 @@ const AvatarUploadModal = ({
         </div>
 
         <div className="p-6">
-          {/* Предпросмотр */}
+
           <div className="flex justify-center mb-6">
             <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-[#FFC873]">
               {preview ? (
-                <img 
-                  src={preview} 
-                  alt="Preview" 
+                <img
+                  src={preview}
+                  alt="Preview"
                   className="w-full h-full object-cover"
                 />
               ) : currentAvatar ? (
-                <img 
-                  src={currentAvatar} 
-                  alt="Current avatar" 
+                <img
+                  src={currentAvatar}
+                  alt="Current avatar"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -343,7 +336,6 @@ const AvatarUploadModal = ({
             </div>
           </div>
 
-          {/* Кнопки действий */}
           <div className="space-y-3">
             <input
               type="file"
@@ -352,7 +344,7 @@ const AvatarUploadModal = ({
               accept="image/*"
               className="hidden"
             />
-            
+
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
@@ -402,7 +394,7 @@ const AvatarUploadModal = ({
 export default function Profile() {
   const params = useParams()
   const slug = params.slug as string
-  
+
   const [user, setUser] = useState<SafeUser | null>(null)
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null)
   const [posts, setPosts] = useState<PostType[]>([])
@@ -422,7 +414,7 @@ export default function Profile() {
 
   const toSafeUser = (data: any): SafeUser | null => {
     if (!data) return null
-    
+
     return {
       id: data.id || '',
       email: data.email || '',
@@ -448,11 +440,11 @@ export default function Profile() {
       setIsLoading(true)
       try {
         const userDataResponse = await getUserById(slug) as any
-        
+
         if (userDataResponse) {
           const safeUser = toSafeUser(userDataResponse)
           setUser(safeUser)
-          
+
           if (safeUser) {
             setFormData({
               firstName: safeUser.firstName,
@@ -462,16 +454,16 @@ export default function Profile() {
               bio: safeUser.bio || '',
               region: safeUser.region || ''
             })
-            
+
             if (safeUser.posts) {
               setPosts(safeUser.posts)
             }
           }
         }
-        
+
         const currentUserData = await getCurrentUser()
         setCurrentUser(toSafeUser(currentUserData))
-        
+
         if (currentUserData?.id === slug) {
           try {
             const testsData = await getUserCourses()
@@ -482,7 +474,7 @@ export default function Profile() {
             console.error(error)
           }
         }
-        
+
       } catch (error) {
         console.error(error)
         toast.error('Не удалось загрузить профиль')
@@ -490,7 +482,7 @@ export default function Profile() {
         setIsLoading(false)
       }
     }
-    
+
     if (slug) {
       loadData()
     }
@@ -503,7 +495,7 @@ export default function Profile() {
         const safeUser = toSafeUser(userDataResponse);
         setUser(safeUser);
       }
-      
+
       const currentUserData = await getCurrentUser();
       setCurrentUser(toSafeUser(currentUserData));
     }
@@ -520,7 +512,7 @@ export default function Profile() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsUpdating(true)
-    
+
     try {
       const result = await updateProfile({
         firstName: formData.firstName,
@@ -530,12 +522,12 @@ export default function Profile() {
         bio: formData.bio,
         region: formData.region
       })
-      
+
       if (result.success && result.user) {
         setUser(toSafeUser(result.user))
         setIsEditModalOpen(false)
         toast.success('Профиль успешно обновлен!')
-        
+
         if (currentUser?.id === user?.id) {
           setCurrentUser(toSafeUser(result.user))
         }
@@ -552,20 +544,20 @@ export default function Profile() {
 
   const getStats = () => {
     if (!user) return null
-    
+
     const postsCount = user._count?.posts || posts.length || 0
     const commentsCount = user._count?.comments || 0
-    
+
     let totalLikes = 0
     if (posts.length > 0) {
       totalLikes = posts.reduce((sum, post) => sum + (post.likes || 0), 0)
     }
-    
+
     let totalCommentsOnPosts = 0
     if (posts.length > 0) {
       totalCommentsOnPosts = posts.reduce((sum, post) => sum + (post._count?.comments || 0), 0)
     }
-    
+
     return {
       postsCount,
       commentsCount,
@@ -610,15 +602,15 @@ export default function Profile() {
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Шапка профиля */}
+
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[#FFC873] mb-8">
           <div className="bg-linear-to-r from-[#FFC873] to-[#FFB840] p-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-full bg-white p-1">
                   {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.avatar}
                       alt={user.firstName}
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -634,13 +626,13 @@ export default function Profile() {
                       <Image src="/images/verified.png" alt="" width={24} height={24} />
                     )}
                   </h1>
-                  <p className="text-white/90">{user.email}</p>
+                  {isOwnProfile && <p className="text-white/90">{user.email}</p>}
                   {user.bio && (
                     <p className="text-white/80 mt-2 break-all max-w-180">{user.bio}</p>
                   )}
                 </div>
               </div>
-              
+
               {isOwnProfile && (
                 <>
                 <button
@@ -650,17 +642,19 @@ export default function Profile() {
                   <Edit size={18} />
                   Редактировать
                 </button>
-                <ToggleSwitch 
-                  size="lg" 
+                <ToggleSwitch
+                  size="lg"
                 />
                 </>
               )}
             </div>
           </div>
-          
+
           <div className="p-6">
-            {/* Информация */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {isOwnProfile && (
+                <>
               <div className="flex items-center gap-3">
                 <div className="h-12 aspect-square rounded-full bg-linear-to-r from-[#FFC873] to-[#FFB840] flex items-center justify-center">
                   <Mail className="text-white" size={20} />
@@ -670,7 +664,7 @@ export default function Profile() {
                   <p className="font-medium dark:text-black">{user.email}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFC873] to-[#FFB840] flex items-center justify-center">
                   <Phone className="text-white" size={20} />
@@ -680,7 +674,7 @@ export default function Profile() {
                   <p className="font-medium dark:text-black">{user.phone}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFC873] to-[#FFB840] flex items-center justify-center">
                   <Calendar className="text-white" size={20} />
@@ -690,7 +684,10 @@ export default function Profile() {
                   <p className="font-medium dark:text-black">{user.age} лет</p>
                 </div>
               </div>
-              
+
+                </>
+              )}
+
               {user.region && (
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-linear-to-r from-[#FFC873] to-[#FFB840] flex items-center justify-center">
@@ -703,8 +700,7 @@ export default function Profile() {
                 </div>
               )}
             </div>
-            
-            {/* Статистика */}
+
             {stats && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-linear-to-r from-[#FFF0F0] to-[#FFE0C2] p-4 rounded-lg">
@@ -714,7 +710,7 @@ export default function Profile() {
                   </div>
                   <p className="text-2xl font-bold text-[#FF7340]">{stats.postsCount}</p>
                 </div>
-                
+
                 <div className="bg-linear-to-r from-[#FFF0F0] to-[#FFE0C2] p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="text-[#FF7340]" size={20} />
@@ -722,7 +718,7 @@ export default function Profile() {
                   </div>
                   <p className="text-2xl font-bold text-[#FF7340]">{stats.commentsCount}</p>
                 </div>
-                
+
                 <div className="bg-linear-to-r from-[#FFF0F0] to-[#FFE0C2] p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <ThumbsUp className="text-[#FF7340]" size={20} />
@@ -730,7 +726,7 @@ export default function Profile() {
                   </div>
                   <p className="text-2xl font-bold text-[#FF7340]">{stats.totalLikes}</p>
                 </div>
-                
+
                 <div className="bg-linear-to-r from-[#FFF0F0] to-[#FFE0C2] p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Trophy className="text-[#FF7340]" size={20} />
@@ -742,9 +738,9 @@ export default function Profile() {
             )}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Посты пользователя */}
+
           <div className="bg-white rounded-xl shadow-lg p-6 border border-[#FFC873]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -752,7 +748,7 @@ export default function Profile() {
                 Посты пользователя ({posts.length})
               </h2>
             </div>
-            
+
             {posts.length > 0 ? (
               <div className="space-y-4">
                 {posts.map((post, index) => (
@@ -761,19 +757,17 @@ export default function Profile() {
                     className="block p-4 border border-gray-200 rounded-lg hover:border-[#FFC873] transition-colors"
                   >
                     <h3 className="font-semibold text-lg text-gray-900 mb-2">{post.title}</h3>
-                    
-                    {/* Галерея изображений */}
+
                     {post.images.length > 0 && (
                       <ImageGallery images={post.images} title={post.title} />
                     )}
-                    
+
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">{post.content}</p>
-                    
-                    {/* Теги */}
+
                     {post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {post.tags.map((tag, tagIndex) => (
-                          <span 
+                          <span
                             key={tagIndex}
                             className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
                           >
@@ -782,15 +776,15 @@ export default function Profile() {
                         ))}
                       </div>
                     )}
-                    
+
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span>
-                        {post.createdAt 
+                        {post.createdAt
                           ? new Date(post.createdAt).toLocaleDateString('ru-RU')
                           : 'Дата не указана'
                         }
                       </span>
-                      <Link 
+                      <Link
                     href={`/posts/${post.id}`}
                     className="text-[#FF7340] hover:text-[#FF4500] font-medium flex items-center gap-2"
                   >
@@ -807,8 +801,7 @@ export default function Profile() {
               </div>
             )}
           </div>
-          
-          {/* Пройденные тесты (только для своего профиля) */}
+
           <div className="bg-white rounded-xl shadow-lg p-6 border border-[#FFC873]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -816,11 +809,11 @@ export default function Profile() {
                 Пройденные тесты ({tests.length})
               </h2>
             </div>
-            
+
             {tests.length > 0 ? (
               <div className="space-y-4">
                 {tests.map((test, index) => (
-                  <div 
+                  <div
                     key={test.id || index}
                     className="p-4 border border-gray-200 rounded-lg hover:border-[#FFC873] transition-colors"
                   >
@@ -846,22 +839,22 @@ export default function Profile() {
                         Пройти снова
                       </Link>
                     </div>
-                    
+
                     <div className="flex items-center justify-between text-sm text-gray-500 mt-3">
                       <span>
-                        {test.completedAt 
+                        {test.completedAt
                           ? new Date(test.completedAt).toLocaleDateString('ru-RU')
                           : 'Дата не указана'
                         }
                       </span>
                       <span className="flex items-center gap-1">
                         <Award size={14} />
-                        {test.score == 5 ? 'Отлично' : 
-                         test.score >= 3 ? 'Хорошо' : 
+                        {test.score == 5 ? 'Отлично' :
+                         test.score >= 3 ? 'Хорошо' :
                          test.score >= 2 ? 'Удовлетворительно' : 'Попробуйте еще раз'}
                       </span>
                     </div>
-                    
+
                     {test.score === 100 && (
                       <div className="mt-3 p-2 bg-linear-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded">
                         <p className="text-sm text-amber-700 flex items-center">
@@ -897,8 +890,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
-      
-      {/* Модальное окно редактирования профиля */}
+
       {isEditModalOpen && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -911,17 +903,16 @@ export default function Profile() {
           <X size={24} />
         </button>
       </div>
-      
-      {/* Секция смены аватара */}
+
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Фото профиля</h3>
         <div className="flex items-center gap-6">
-          {/* Текущий аватар */}
+
           <div className="relative group">
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#FFC873]">
               {user.avatar ? (
-                <img 
-                  src={user.avatar} 
+                <img
+                  src={user.avatar}
                   alt={user.firstName}
                   className="w-full h-full object-cover"
                 />
@@ -933,7 +924,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Кнопки управления аватаром */}
           <div className="flex-1 space-y-2">
             <button
               onClick={() => {
@@ -945,7 +935,7 @@ export default function Profile() {
               <Camera size={18} />
               Загрузить новое фото
             </button>
-            
+
             {user.avatar && (
               <button
                 onClick={async () => {
@@ -953,7 +943,6 @@ export default function Profile() {
                     const result = await removeAvatar();
                     if (result.success) {
                       toast.success('Аватар удален');
-                      // Обновляем данные пользователя
                       const userDataResponse = await getUserById(slug) as any;
                       if (userDataResponse) {
                         const safeUser = toSafeUser(userDataResponse);
@@ -977,7 +966,6 @@ export default function Profile() {
         </p>
       </div>
 
-      {/* Форма редактирования профиля */}
       <form onSubmit={handleUpdateProfile} className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
@@ -993,7 +981,7 @@ export default function Profile() {
               className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Фамилия *
@@ -1007,7 +995,7 @@ export default function Profile() {
               className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Возраст *
@@ -1023,7 +1011,7 @@ export default function Profile() {
               className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Телефон *
@@ -1037,7 +1025,7 @@ export default function Profile() {
               className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
             />
           </div>
-          
+
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Регион
@@ -1051,7 +1039,7 @@ export default function Profile() {
               className="w-full px-4 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
             />
           </div>
-          
+
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               О себе
@@ -1066,7 +1054,7 @@ export default function Profile() {
             />
           </div>
         </div>
-        
+
         <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
           <button
             type="button"
@@ -1098,7 +1086,6 @@ export default function Profile() {
   </div>
 )}
 
-{/* Модальное окно для загрузки аватара (остается отдельно) */}
 <AvatarUploadModal
   isOpen={isAvatarModalOpen}
   onClose={() => setIsAvatarModalOpen(false)}

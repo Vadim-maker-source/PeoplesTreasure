@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "../prisma";
 import { getCurrentUser } from "./user";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { randomBytes } from "crypto";
 import { peoples } from "../peoples";
 import { sendModerationEmail } from "../nodemailer";
+import { isAdmin, requireAdmin } from "../authorization";
+import { uploadFile } from "../storage";
+import { consumeRateLimit } from "../rate-limit";
 
 export type PostWithAuthor = {
   id: string;
@@ -21,7 +22,7 @@ export type PostWithAuthor = {
     id?: string
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
     avatar?: string | null;
     verified?: boolean;
   };
@@ -40,16 +41,6 @@ type UpdatePostData = {
   newVideos: File[]
 }
 
-const s3Client = new S3Client({
-  endpoint: process.env.YANDEX_ENDPOINT?.trim() || "https://storage.yandexcloud.net",
-  region: process.env.YANDEX_REGION || "ru-central1",
-  credentials: {
-    accessKeyId: process.env.YANDEX_ACCESS!,
-    secretAccessKey: process.env.YANDEX_SECRET!,
-  },
-  forcePathStyle: true,
-});
-
 type CreatePostData = {
   title: string;
   content: string;
@@ -59,105 +50,81 @@ type CreatePostData = {
   videos: File[];
 };
 
-function isVideoFile(file: File): boolean {
-  return file.type.startsWith('video/');
-}
-
-function isImageFile(file: File): boolean {
-  return file.type.startsWith('image/');
-}
-
-export async function uploadFile(file: File): Promise<{ url: string }> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-  
-  const ext = file.name.split('.').pop()?.toLowerCase() || 
-    (isVideoFile(file) ? 'mp4' : 'jpg');
-  
-  const safeExt = isVideoFile(file) 
-    ? ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext) ? ext : 'mp4'
-    : ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
-  
-  const key = `posts/${Date.now()}-${randomBytes(6).toString('hex')}.${safeExt}`;
-
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.YANDEX_BUCKET!,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    })
-  );
-
-  return { 
-    url: `https://storage.yandexcloud.net/peoples-treasure/${key}`
-  };
-}
-
 export async function createPost(formData: CreatePostData) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: 'Необходима авторизация для создания поста' };
     }
+    const rateLimit = await consumeRateLimit('create-post', user.id, 10, 60 * 60 * 1000);
+    if (!rateLimit.allowed) return { success: false, error: 'Слишком много публикаций. Попробуйте позже.' };
 
     if (!peoples.some(p => p.id === formData.ethnicGroupId)) {
       return { success: false, error: 'Выбранный народ не найден' };
     }
 
+    const title = formData.title.trim();
+    const content = formData.content.trim();
+    if (!title || title.length > 200) return { success: false, error: 'Заголовок должен содержать от 1 до 200 символов' };
+    if (!content || content.length > 20000) return { success: false, error: 'Текст должен содержать от 1 до 20000 символов' };
+    if (formData.images.length > 10 || formData.videos.length > 5) return { success: false, error: 'Слишком много медиафайлов' };
+    const totalBytes = [...formData.images, ...formData.videos].reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > 60 * 1024 * 1024) return { success: false, error: 'Общий размер файлов превышает 60 МБ' };
+
     const mediaUrls: string[] = [];
-    
+
     for (const file of formData.images) {
       if (file.size > 5 * 1024 * 1024) {
-        return { 
-          success: false, 
-          error: `Изображение "${file.name}" превышает лимит 5 МБ` 
+        return {
+          success: false,
+          error: `Изображение "${file.name}" превышает лимит 5 МБ`
         };
       }
-      
+
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
       if (!allowedTypes.includes(file.type)) {
-        return { 
-          success: false, 
-          error: `Недопустимый формат изображения "${file.name}". Разрешены: JPG, PNG, WebP, GIF` 
+        return {
+          success: false,
+          error: `Недопустимый формат изображения "${file.name}". Разрешены: JPG, PNG, WebP, GIF`
         };
       }
 
       try {
-        const { url } = await uploadFile(file);
+        const { url } = await uploadFile(file, 'image');
         mediaUrls.push(url);
       } catch (err) {
         console.error('Ошибка загрузки файла:', file.name, err);
-        return { 
-          success: false, 
-          error: `Ошибка загрузки "${file.name}": ${err instanceof Error ? err.message : 'Серверная ошибка'}` 
+        return {
+          success: false,
+          error: `Ошибка загрузки "${file.name}": ${err instanceof Error ? err.message : 'Серверная ошибка'}`
         };
       }
     }
 
     for (const file of formData.videos) {
       if (file.size > 50 * 1024 * 1024) {
-        return { 
-          success: false, 
-          error: `Видео "${file.name}" превышает лимит 50 МБ` 
+        return {
+          success: false,
+          error: `Видео "${file.name}" превышает лимит 50 МБ`
         };
       }
-      
+
       const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
       if (!allowedTypes.includes(file.type)) {
-        return { 
-          success: false, 
-          error: `Недопустимый формат видео "${file.name}". Разрешены: MP4, WebM, MOV, AVI` 
+        return {
+          success: false,
+          error: `Недопустимый формат видео "${file.name}". Разрешены: MP4, WebM, MOV, AVI`
         };
       }
 
       try {
-        const { url } = await uploadFile(file);
+        const { url } = await uploadFile(file, 'video');
         mediaUrls.push(url);
       } catch (err) {
         console.error('Ошибка загрузки видео:', file.name, err);
-        return { 
-          success: false, 
-          error: `Ошибка загрузки "${file.name}": ${err instanceof Error ? err.message : 'Серверная ошибка'}` 
+        return {
+          success: false,
+          error: `Ошибка загрузки "${file.name}": ${err instanceof Error ? err.message : 'Серверная ошибка'}`
         };
       }
     }
@@ -170,8 +137,8 @@ export async function createPost(formData: CreatePostData) {
 
     const post = await prisma.post.create({
       data: {
-        title: formData.title.trim().slice(0, 200),
-        content: formData.content.trim(),
+        title,
+        content,
         ethnicGroupId: formData.ethnicGroupId,
         tags: tagsArray,
         images: mediaUrls,
@@ -180,11 +147,11 @@ export async function createPost(formData: CreatePostData) {
       },
       include: {
         author: {
-          select: { 
-            firstName: true, 
-            lastName: true, 
+          select: {
+            firstName: true,
+            lastName: true,
             email: true,
-            id: true 
+            id: true
           },
         },
       },
@@ -204,9 +171,9 @@ export async function createPost(formData: CreatePostData) {
     revalidatePath('/');
     revalidatePath('/posts');
     revalidatePath('/admin/moderate');
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: 'Пост успешно создан и отправлен на модерацию!',
       postId: post.id,
       redirectUrl: `/posts/${post.id}`,
@@ -214,8 +181,8 @@ export async function createPost(formData: CreatePostData) {
 
   } catch (error) {
     console.error('Критическая ошибка создания поста:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Неизвестная ошибка сервера',
     };
   }
@@ -224,11 +191,11 @@ export async function createPost(formData: CreatePostData) {
 export async function moderatePost(postId: string, action: 'approve' | 'reject') {
   try {
     const user = await getCurrentUser();
-    
-    if (!user || user.id !== '1') {
-      return { 
-        success: false, 
-        error: 'Доступ запрещен. Только администратор может модерировать посты' 
+
+    if (!isAdmin(user)) {
+      return {
+        success: false,
+        error: 'Доступ запрещен. Только администратор может модерировать посты'
       };
     }
 
@@ -261,16 +228,16 @@ export async function moderatePost(postId: string, action: 'approve' | 'reject')
     revalidatePath('/forum');
     revalidatePath('/admin/moderate');
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: `Пост успешно ${action === 'approve' ? 'одобрен' : 'отклонен'}`,
       post: updatedPost
     };
 
   } catch (error) {
     console.error('Ошибка модерации поста:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Неизвестная ошибка сервера',
     };
   }
@@ -278,11 +245,7 @@ export async function moderatePost(postId: string, action: 'approve' | 'reject')
 
 export async function getPendingPosts() {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user || user.id !== '1') {
-      throw new Error('Доступ запрещен');
-    }
+    await requireAdmin();
 
     const posts = await prisma.post.findMany({
       where: {
@@ -322,11 +285,7 @@ export async function getPendingPosts() {
 
 export async function getPendingPostsCount() {
   try {
-    const user = await getCurrentUser();
-    
-    if (!user || user.id !== '1') {
-      return 0;
-    }
+    await requireAdmin();
 
     const count = await prisma.post.count({
       where: {
@@ -342,14 +301,16 @@ export async function getPendingPostsCount() {
 }
 
 export async function getAllPosts(
-  page: number = 1, 
+  page: number = 1,
   limit: number = 10,
   sortBy: 'newest' | 'popular' = 'newest'
 ) {
   try {
     const user = await getCurrentUser();
-    const skip = (page - 1) * limit;
-    
+    const safePage = Math.max(1, Math.floor(page));
+    const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)));
+    const skip = (safePage - 1) * safeLimit;
+
     let orderBy = {};
     if (sortBy === 'newest') {
       orderBy = { createdAt: 'desc' };
@@ -359,13 +320,13 @@ export async function getAllPosts(
         { createdAt: 'desc' }
       ];
     }
-    
+
     const posts = await prisma.post.findMany({
       where: {
         status: 'approved',
       },
       skip,
-      take: limit,
+      take: safeLimit,
       orderBy,
       include: {
         author: {
@@ -373,7 +334,6 @@ export async function getAllPosts(
             id: true,
             firstName: true,
             lastName: true,
-            email: true,
             avatar: true,
             verified: true
           },
@@ -391,14 +351,13 @@ export async function getAllPosts(
         status: 'approved',
       },
     });
-    const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.ceil(totalCount / safeLimit);
 
-    const postsWithLikes = await Promise.all(posts.map(async (post) => {
-      let likedByUser = false;
-      if (user) {
-        likedByUser = post.likes > 0 && user.id === post.authorId;
-      }
-      
+    const likedPostIds = new Set(user ? (await prisma.postLike.findMany({
+      where: { userId: user.id, postId: { in: posts.map(post => post.id) } },
+      select: { postId: true },
+    })).map(like => like.postId) : []);
+    const postsWithLikes = posts.map((post) => {
       return {
         id: post.id,
         title: post.title,
@@ -407,22 +366,22 @@ export async function getAllPosts(
         images: post.images,
         tags: post.tags,
         likes: post.likes,
-        likedByUser,
+        likedByUser: likedPostIds.has(post.id),
         author: post.author,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
         commentsCount: post._count.comments,
       };
-    }));
+    });
 
     return {
       posts: postsWithLikes,
       pagination: {
-        currentPage: page,
+        currentPage: safePage,
         totalPages,
         totalCount,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        hasNextPage: safePage < totalPages,
+        hasPrevPage: safePage > 1,
       },
     };
   } catch (error) {
@@ -432,15 +391,17 @@ export async function getAllPosts(
 }
 
 export async function getPostsByEthnicGroup(
-  ethnicGroupId: string, 
-  page: number = 1, 
+  ethnicGroupId: string,
+  page: number = 1,
   limit: number = 10,
   sortBy: 'newest' | 'popular' = 'newest'
 ) {
   try {
     const user = await getCurrentUser();
-    const skip = (page - 1) * limit;
-    
+    const safePage = Math.max(1, Math.floor(page));
+    const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)));
+    const skip = (safePage - 1) * safeLimit;
+
     let orderBy = {};
     if (sortBy === 'newest') {
       orderBy = { createdAt: 'desc' };
@@ -450,14 +411,14 @@ export async function getPostsByEthnicGroup(
         { createdAt: 'desc' }
       ];
     }
-    
+
     const posts = await prisma.post.findMany({
       where: {
         ethnicGroupId,
         status: 'approved',
       },
       skip,
-      take: limit,
+      take: safeLimit,
       orderBy,
       include: {
         author: {
@@ -465,7 +426,6 @@ export async function getPostsByEthnicGroup(
             id: true,
             firstName: true,
             lastName: true,
-            email: true,
             avatar: true,
             verified: true
           },
@@ -479,20 +439,19 @@ export async function getPostsByEthnicGroup(
     });
 
     const totalCount = await prisma.post.count({
-      where: { 
+      where: {
         ethnicGroupId,
         status: 'approved',
       },
     });
-    
-    const totalPages = Math.ceil(totalCount / limit);
 
-    const postsWithLikes = await Promise.all(posts.map(async (post) => {
-      let likedByUser = false;
-      if (user) {
-        likedByUser = post.likes > 0 && user.id === post.authorId;
-      }
-      
+    const totalPages = Math.ceil(totalCount / safeLimit);
+
+    const likedPostIds = new Set(user ? (await prisma.postLike.findMany({
+      where: { userId: user.id, postId: { in: posts.map(post => post.id) } },
+      select: { postId: true },
+    })).map(like => like.postId) : []);
+    const postsWithLikes = posts.map((post) => {
       return {
         id: post.id,
         title: post.title,
@@ -501,22 +460,22 @@ export async function getPostsByEthnicGroup(
         images: post.images,
         tags: post.tags,
         likes: post.likes,
-        likedByUser,
+        likedByUser: likedPostIds.has(post.id),
         author: post.author,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
         commentsCount: post._count.comments,
       };
-    }));
+    });
 
     return {
       posts: postsWithLikes,
       pagination: {
-        currentPage: page,
+        currentPage: safePage,
         totalPages,
         totalCount,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        hasNextPage: safePage < totalPages,
+        hasPrevPage: safePage > 1,
       },
     };
   } catch (error) {
@@ -528,7 +487,7 @@ export async function getPostsByEthnicGroup(
 export async function getPostById(id: string) {
   try {
     const user = await getCurrentUser();
-    
+
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
@@ -537,7 +496,6 @@ export async function getPostById(id: string) {
             id: true,
             firstName: true,
             lastName: true,
-            email: true,
             avatar: true,
             bio: true,
           },
@@ -571,16 +529,16 @@ export async function getPostById(id: string) {
     }
 
     const isAuthor = user && post.authorId === user.id;
-    const isAdmin = user && user.id === '1';
-    
-    if (post.status !== 'approved' && !isAuthor && !isAdmin) {
+    const admin = isAdmin(user);
+
+    if (post.status !== 'approved' && !isAuthor && !admin) {
       return null;
     }
 
-    let likedByUser = false;
-    if (user) {
-      likedByUser = post.likes > 0 && user.id === post.authorId;
-    }
+    const likedByUser = user ? Boolean(await prisma.postLike.findUnique({
+      where: { userId_postId: { userId: user.id, postId: post.id } },
+      select: { postId: true },
+    })) : false;
 
     return {
       ...post,
@@ -595,8 +553,10 @@ export async function getPostById(id: string) {
 
 export async function getPopularPosts(limit: number = 10) {
   try {
+    const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)));
     const posts = await prisma.post.findMany({
-      take: limit,
+      where: { status: 'approved' },
+      take: safeLimit,
       orderBy: {
         likes: 'desc',
       },
@@ -605,7 +565,6 @@ export async function getPopularPosts(limit: number = 10) {
           select: {
             firstName: true,
             lastName: true,
-            email: true,
             avatar: true,
             verified: true
           },
@@ -640,58 +599,67 @@ export async function getPopularPosts(limit: number = 10) {
 export async function toggleLike(postId: string) {
     try {
       const user = await getCurrentUser();
-      
+
       if (!user) {
         throw new Error('Необходима авторизация');
       }
-  
+
       const post = await prisma.post.findUnique({
         where: { id: postId },
-        select: { likes: true, authorId: true }
+        select: { status: true }
       });
-  
-      if (!post) {
+
+      if (!post || post.status !== 'approved') {
         throw new Error('Пост не найден');
       }
-  
-      const newLikes = post.likes > 0 ? post.likes - 1 : post.likes + 1;
-      
-      const updatedPost = await prisma.post.update({
-        where: { id: postId },
-        data: {
-          likes: newLikes,
-        },
+
+      const existingLike = await prisma.postLike.findUnique({
+        where: { userId_postId: { userId: user.id, postId } },
       });
-  
+      const result = await prisma.$transaction(async transaction => {
+        if (existingLike) {
+          await transaction.postLike.delete({ where: { userId_postId: { userId: user.id, postId } } });
+        } else {
+          await transaction.postLike.create({ data: { userId: user.id, postId } });
+        }
+        const likes = await transaction.postLike.count({ where: { postId } });
+        await transaction.post.update({ where: { id: postId }, data: { likes } });
+        return likes;
+      });
+
       return {
         success: true,
-        likes: updatedPost.likes,
-        liked: newLikes > post.likes,
+        likes: result,
+        liked: !existingLike,
       };
     } catch (error) {
       console.error(error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error instanceof Error ? error.message : 'Не удалось поставить лайк',
         isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
       };
     }
   }
-  
-
-
 
 export async function createComment(postId: string, content: string) {
     try {
       const user = await getCurrentUser();
-      
+
       if (!user) {
         throw new Error('Необходима авторизация');
       }
-  
+      const rateLimit = await consumeRateLimit('create-comment', user.id, 30, 5 * 60 * 1000);
+      if (!rateLimit.allowed) throw new Error('Слишком много комментариев. Попробуйте позже.');
+
+      const cleanContent = content.trim();
+      if (!cleanContent || cleanContent.length > 2000) throw new Error('Комментарий должен содержать от 1 до 2000 символов');
+      const post = await prisma.post.findUnique({ where: { id: postId }, select: { status: true } });
+      if (!post || post.status !== 'approved') throw new Error('Публикация недоступна');
+
       const comment = await prisma.comment.create({
         data: {
-          content: content.trim(),
+          content: cleanContent,
           authorId: user.id,
           postId,
         },
@@ -707,34 +675,36 @@ export async function createComment(postId: string, content: string) {
           },
         },
       });
-  
+
     revalidatePath(`/posts/${postId}`);
-      
+
     return {
       success: true,
       comment,
     };
   } catch (error) {
     console.error(error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error instanceof Error ? error.message : 'Не удалось создать комментарий',
         isAuthError: error instanceof Error && error.message === 'Необходима авторизация'
       };
   }
 }
 
-export async function deleteComment(id: string, authorId: string, commentId: string){
+export async function deleteComment(_id: string, _authorId: string, commentId: string){
   try {
-    if (id !== authorId) {
-      throw new Error('Не ваш комментарий');
-    }
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Необходима авторизация');
+    const existingComment = await prisma.comment.findUnique({ where: { id: commentId } });
+    if (!existingComment) throw new Error('Комментарий не найден');
+    if (existingComment.authorId !== user.id && !isAdmin(user)) throw new Error('Не ваш комментарий');
 
     const comment = await prisma.comment.delete({
       where: { id: commentId }
     })
 
-    revalidatePath(`/posts/${comment.id}`);
+    revalidatePath(`/posts/${comment.postId}`);
 
     return{
       success: true
@@ -742,9 +712,9 @@ export async function deleteComment(id: string, authorId: string, commentId: str
   } catch (error) {
     console.error(error)
     return {
-      success: false, 
-      error: error instanceof Error ? error.message : 'Не удалось создать комментарий',
-      isAuthError: error instanceof Error && error.message === 'Не ваш комментарий'
+      success: false,
+      error: error instanceof Error ? error.message : 'Не удалось удалить комментарий',
+      isAuthError: error instanceof Error && (error.message === 'Не ваш комментарий' || error.message === 'Необходима авторизация')
     };
   }
 }
@@ -752,7 +722,7 @@ export async function deleteComment(id: string, authorId: string, commentId: str
 export async function updateComment(commentId: string, content: string) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
       throw new Error('Необходима авторизация');
     }
@@ -769,10 +739,13 @@ export async function updateComment(commentId: string, content: string) {
       throw new Error('Это не ваш комментарий');
     }
 
+    const cleanContent = content.trim();
+    if (!cleanContent || cleanContent.length > 2000) throw new Error('Комментарий должен содержать от 1 до 2000 символов');
+
     const updatedComment = await prisma.comment.update({
       where: { id: commentId },
       data: {
-        content: content.trim(),
+        content: cleanContent,
       },
       include: {
         author: {
@@ -788,15 +761,15 @@ export async function updateComment(commentId: string, content: string) {
     });
 
     revalidatePath(`/posts/${comment.postId}`);
-    
+
     return {
       success: true,
       comment: updatedComment,
     };
   } catch (error) {
     console.error(error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Не удалось обновить комментарий',
       isAuthError: error instanceof Error && error.message === 'Необходима авторизация' || error === 'Это не ваш комментарий'
     };
@@ -806,7 +779,7 @@ export async function updateComment(commentId: string, content: string) {
 export async function deletePost(postId: string) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
       throw new Error('Необходима авторизация');
     }
@@ -834,17 +807,17 @@ export async function deletePost(postId: string) {
 
     revalidatePath('/forum');
     revalidatePath(`/posts/${postId}`);
-    
+
     return {
       success: true,
       message: 'Пост успешно удалён'
     };
   } catch (error) {
     console.error(error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Не удалось удалить пост',
-      isAuthError: error instanceof Error && 
+      isAuthError: error instanceof Error &&
         (error.message === 'Необходима авторизация' || error.message === 'Это не ваш пост')
     };
   }
@@ -858,36 +831,55 @@ export async function updatePost(postId: string, data: UpdatePostData) {
     const post = await prisma.post.findUnique({ where: { id: postId } })
     if (!post) throw new Error('Пост не найден')
     if (post.authorId !== user.id) throw new Error('Это не ваш пост')
+    if (data.ethnicGroupId && !peoples.some(person => person.id === data.ethnicGroupId)) {
+      throw new Error('Выбранный народ не найден')
+    }
+    const title = data.title.trim()
+    const content = data.content.trim()
+    if (!title || title.length > 200) throw new Error('Заголовок должен содержать от 1 до 200 символов')
+    if (!content || content.length > 20000) throw new Error('Текст должен содержать от 1 до 20000 символов')
+    const existingImages = data.existingImages.filter(url => post.images.includes(url))
+    if (data.newImages.length > 10 || data.newVideos.length > 5 || existingImages.length + data.newImages.length + data.newVideos.length > 15) {
+      throw new Error('Слишком много медиафайлов')
+    }
+    const totalBytes = [...data.newImages, ...data.newVideos].reduce((sum, file) => sum + file.size, 0)
+    if (totalBytes > 60 * 1024 * 1024) throw new Error('Общий размер файлов превышает 60 МБ')
 
     const uploadedMedia: string[] = []
 
-    // Загрузка новых изображений
     for (const file of data.newImages) {
-      const url = await uploadFile(file)
+      const url = await uploadFile(file, 'image')
       uploadedMedia.push(String(url?.url))
     }
 
-    // Загрузка новых видео
     for (const file of data.newVideos) {
-      const url = await uploadFile(file)
+      const url = await uploadFile(file, 'video')
       uploadedMedia.push(String(url?.url))
     }
 
     const updatedPost = await prisma.post.update({
       where: { id: postId },
       data: {
-        title: data.title,
-        content: data.content,
-        tags: data.tags,
+        title,
+        content,
+        tags: data.tags.map(tag => tag.trim()).filter(tag => tag.length > 0 && tag.length <= 30).slice(0, 10),
         ethnicGroupId: data.ethnicGroupId,
-        images: [...data.existingImages, ...uploadedMedia]
+        images: [...existingImages, ...uploadedMedia],
+        status: 'pending',
       }
     })
+
+    await sendModerationEmail({
+      postId: updatedPost.id,
+      postTitle: updatedPost.title,
+      authorName: `${user.firstName} ${user.lastName}`,
+      authorEmail: user.email,
+    }).catch(error => console.error(error))
 
     revalidatePath('/forum')
     revalidatePath(`/posts/${postId}`)
 
-    return { success: true, post: updatedPost }
+    return { success: true, post: updatedPost, message: 'Изменения отправлены на повторную модерацию' }
   } catch (error) {
     return {
       success: false,

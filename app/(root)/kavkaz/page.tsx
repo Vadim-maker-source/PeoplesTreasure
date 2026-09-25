@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 const Kavkaz = () => {
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const foodImages = [
     { src: '/images/kFood1.png', alt: 'Хинкали' },
     { src: '/images/kFood2.webp', alt: 'Чурек' },
@@ -24,7 +24,7 @@ const Kavkaz = () => {
   };
 
   const [currentSuiteSlide, setCurrentSuiteSlide] = useState(0);
-  
+
   const suiteImages = [
     { src: '/images/mongSuit1.jpg', alt: 'дэгэл' },
     { src: '/images/mongSuit2.jpg', alt: 'цегдег' },
@@ -152,7 +152,7 @@ const Kavkaz = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <button
               onClick={nextSlide}
               className="absolute cursor-pointer right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110"
@@ -169,8 +169,8 @@ const Kavkaz = () => {
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentSlide 
-                      ? 'bg-white scale-125' 
+                    index === currentSlide
+                      ? 'bg-white scale-125'
                       : 'bg-white/60 hover:bg-white/80'
                   }`}
                   aria-label={`Перейти к слайду ${index + 1}`}

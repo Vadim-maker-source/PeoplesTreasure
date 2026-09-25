@@ -2,6 +2,7 @@
 
 import { prisma } from '../prisma';
 import { getCurrentUser } from './user';
+import { ethnicGroupQuestions } from '../questions';
 
 export type Question = {
   id: number;
@@ -19,30 +20,31 @@ export type TestResult = {
   answers: {
     questionId: number;
     selectedAnswer: number;
-    correctAnswer: number;
-    isCorrect: boolean;
+    selectedOption?: string;
   }[];
 };
 
 export async function getOrCreateTest(
-    userId: string,
-    ethnicGroupId: string, 
+    ethnicGroupId: string,
     ethnicGroupName: string
   ) {
     try {
+      const user = await getCurrentUser();
+      if (!user) return { success: false, error: 'Необходима авторизация' };
+
       let course = await prisma.course.findUnique({
         where: {
           userId_ethnicGroupId: {
-            userId,
+            userId: user.id,
             ethnicGroupId,
           },
         },
       });
-  
+
       if (!course) {
         course = await prisma.course.create({
           data: {
-            userId,
+            userId: user.id,
             ethnicGroupId,
             ethnicGroupName,
             completed: false,
@@ -50,7 +52,7 @@ export async function getOrCreateTest(
           },
         });
       }
-  
+
       return {
         success: true,
         course,
@@ -78,10 +80,32 @@ export async function getOrCreateTest(
           userAuthenticated: false,
         };
       }
-  
-      const passed = results.passed;
+
+      const canonicalQuestions = ethnicGroupQuestions[ethnicGroupId];
+      if (!canonicalQuestions?.length) {
+        return { success: false, error: 'Тест не найден' };
+      }
+
+      if (!Array.isArray(results.answers) || results.answers.length !== canonicalQuestions.length) {
+        return { success: false, error: 'Некорректные ответы теста' };
+      }
+
+      const answers = canonicalQuestions.map((question) => {
+        const submitted = results.answers.find((answer) => answer.questionId === question.id);
+        const selectedOption = submitted?.selectedOption;
+        const correctOption = question.options[question.correctAnswer];
+        return {
+          questionId: question.id,
+          selectedAnswer: typeof submitted?.selectedAnswer === 'number' ? submitted.selectedAnswer : -1,
+          selectedOption: typeof selectedOption === 'string' ? selectedOption : '',
+          isCorrect: selectedOption === correctOption,
+        };
+      });
+      const score = answers.filter((answer) => answer.isCorrect).length;
+      const total = canonicalQuestions.length;
+      const passed = score === total;
       const now = new Date();
-  
+
       const course = await prisma.course.upsert({
         where: {
           userId_ethnicGroupId: {
@@ -91,8 +115,8 @@ export async function getOrCreateTest(
         },
         update: {
           completed: passed,
-          score: results.score,
-          answers: results.answers,
+          score,
+          answers,
           completedAt: passed ? now : null,
           updatedAt: now,
         },
@@ -101,20 +125,20 @@ export async function getOrCreateTest(
           ethnicGroupId,
           ethnicGroupName,
           completed: passed,
-          score: results.score,
-          answers: results.answers,
+          score,
+          answers,
           completedAt: passed ? now : null,
         },
       });
-  
-      let certificateUrl = null;
-  
+
+      const certificateUrl = null;
+
       return {
         success: true,
         course: { ...course, certificateUrl },
         passed,
-        score: results.score,
-        total: results.total,
+        score,
+        total,
         userAuthenticated: true,
       };
     } catch (error) {

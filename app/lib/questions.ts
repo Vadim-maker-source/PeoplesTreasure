@@ -1,4 +1,4 @@
-import { Question } from './api/courses';
+import type { Question } from './api/courses';
 
 export const ethnicGroupQuestions: Record<string, Question[]> = {
   "1": [
@@ -7,7 +7,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "Какова численность Татаров?",
       options: [
         "4,7 млн человек",
-        "50 тыс. человек", 
+        "50 тыс. человек",
         "1,6 млн человек",
         "16 тыс. человек"
       ],
@@ -19,7 +19,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "Поволжье",
         "Алтайский край",
-        "Восточная Сибирь", 
+        "Восточная Сибирь",
         "Приуралье"
       ],
       correctAnswer: 0
@@ -40,7 +40,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "В каком веке произошло присоединение Казанского ханства к России?",
       options: [
         "В XVI веке",
-        "В XVII веке", 
+        "В XVII веке",
         "В XV веке",
         "Казанское ханство не входит в состав РФ"
       ],
@@ -59,14 +59,14 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       correctAnswer: 0
     }
   ],
-  
+
   "2": [
     {
       id: 1,
       text: "Какова численность Башкиров?",
       options: [
         "1,6 млн человек",
-        "50 тыс. человек", 
+        "50 тыс. человек",
         "4,7 млн человек",
         "16 тыс. человек"
       ],
@@ -78,7 +78,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "Южный Урал и Приуралье",
         "Алтайский край",
-        "Восточная Сибирь", 
+        "Восточная Сибирь",
         "Арктика"
       ],
       correctAnswer: 0,
@@ -88,7 +88,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "Как называется музыкальный символ Башкир?",
       options: [
         "Курай",
-        "Балалайка", 
+        "Балалайка",
         "Гормонь",
         "Килень"
       ],
@@ -100,7 +100,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "В IX-X вв.",
         "В XII-IX вв.",
-        "В XI-XII вв.", 
+        "В XI-XII вв.",
         "В XV-XVI вв."
       ],
       correctAnswer: 0,
@@ -110,7 +110,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "В каком году появился Башкирский АССР?",
       options: [
         "В 1919 г",
-        "В 1917 г", 
+        "В 1917 г",
         "В 1945 г",
         "В 1819 г"
       ],
@@ -124,7 +124,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "Какова численность Ненцев?",
       options: [
         "50 тыс. человек",
-        "16 тыс. человек", 
+        "16 тыс. человек",
         "4,7 млн человек",
         "1,6 млн человек"
       ],
@@ -136,7 +136,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "Ненецкий автономный округ",
         "Республика Карелия",
-        "Саяны", 
+        "Саяны",
         "Республика Саха (Якутия)"
       ],
       correctAnswer: 0,
@@ -146,7 +146,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "Какое основное занятие Ненцев?",
       options: [
         "Кочевание",
-        "Рыболовство", 
+        "Рыболовство",
         "Торговля",
         "Охота"
       ],
@@ -158,7 +158,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "5 в. до н.э.",
         "7 век н.э",
-        "4 век н.э.", 
+        "4 век н.э.",
         "1 век н.э."
       ],
       correctAnswer: 0,
@@ -168,21 +168,21 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "В каком году Ненцы вошли в состав Российского Государства?",
       options: [
         "В XVI-XVII века",
-        "В XV-XVI века", 
+        "В XV-XVI века",
         "В XX-XXI века",
         "В XVIII-XIX века"
       ],
       correctAnswer: 0,
     }
   ],
-  
+
   "4": [
     {
       id: 1,
       text: "Какова численность Чукчей?",
       options: [
         "16 тыс. человек",
-        "50 тыс. человек", 
+        "50 тыс. человек",
         "4,7 млн человек",
         "1,6 млн человек"
       ],
@@ -194,7 +194,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "Чукотский автономный округ",
         "Республика Коми",
-        "Красноярский край", 
+        "Красноярский край",
         "Центральные регионы"
       ],
       correctAnswer: 0,
@@ -204,7 +204,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "Какое основное занятие Чукчей?",
       options: [
         "Оленьеводство",
-        "Скотофодство", 
+        "Скотофодство",
         "Растениеводство",
         "Экоферма"
       ],
@@ -216,7 +216,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       options: [
         "1930-е годы",
         "1920-е годы",
-        "1970-е годы", 
+        "1970-е годы",
         "1950-е годы"
       ],
       correctAnswer: 0,
@@ -226,7 +226,7 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
       text: "В каком году был подписан мир. договор с Русскими?",
       options: [
         "В 1778 г",
-        "В 1769 г", 
+        "В 1769 г",
         "В 1779 г",
         "В 1771 г"
       ],
@@ -238,17 +238,17 @@ export const ethnicGroupQuestions: Record<string, Question[]> = {
 export function getRandomQuestions(ethnicGroupId: string): Question[] {
   const questions = ethnicGroupQuestions[ethnicGroupId];
   if (!questions) return [];
-  
+
   const mixQuestions = [...questions].sort(() => Math.random() - 0.5);
-  
+
   return mixQuestions.map(question => {
     const optionsWithIndices = question.options.map((option, index) => ({ option, index }));
     const mixOptions = [...optionsWithIndices].sort(() => Math.random() - 0.5);
-    
+
     const newCorrectAnswer = mixOptions.findIndex(
       item => item.index === question.correctAnswer
     );
-    
+
     return {
       ...question,
       options: mixOptions.map(item => item.option),

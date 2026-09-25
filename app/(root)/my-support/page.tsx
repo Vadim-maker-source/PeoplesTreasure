@@ -20,7 +20,7 @@ export default function MySupportPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  
+
   const router = useRouter();
 
   useEffect(() => {
@@ -29,17 +29,17 @@ export default function MySupportPage() {
 
   const loadUserAndTickets = async () => {
     setIsLoading(true);
-    
+
     const currentUser = await getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
-      
+
       const result = await getUserSupportTickets(
         currentPage,
         10,
         filterStatus === 'all' ? undefined : filterStatus as any
       );
-      
+
       if (result.success) {
         setTickets(result.tickets || []);
         setUnreadCount(result.unreadCount || 0);
@@ -57,7 +57,7 @@ export default function MySupportPage() {
       toast.error('Необходима авторизация');
       router.push('/sign-in?callbackUrl=/my-support');
     }
-    
+
     setIsLoading(false);
   };
 
@@ -87,7 +87,7 @@ export default function MySupportPage() {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - d.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return 'Сегодня в ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
@@ -95,12 +95,12 @@ export default function MySupportPage() {
     } else if (diffDays < 7) {
       return d.toLocaleDateString('ru-RU', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
     } else {
-      return d.toLocaleDateString('ru-RU', { 
-        day: 'numeric', 
-        month: 'long', 
+      return d.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
         year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-        hour: '2-digit', 
-        minute: '2-digit' 
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
   };
@@ -137,7 +137,7 @@ export default function MySupportPage() {
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Хедер */}
+
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -148,7 +148,7 @@ export default function MySupportPage() {
                 Здесь вы можете отслеживать статус ваших обращений и читать ответы от администрации
               </p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {unreadCount > 0 && (
                 <div className="relative">
@@ -167,7 +167,6 @@ export default function MySupportPage() {
           </div>
         </div>
 
-        {/* Статистика */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
             <div className="flex items-center justify-between">
@@ -180,7 +179,7 @@ export default function MySupportPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -194,7 +193,7 @@ export default function MySupportPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -210,7 +209,6 @@ export default function MySupportPage() {
           </div>
         </div>
 
-        {/* Фильтры */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
             {[
@@ -223,8 +221,8 @@ export default function MySupportPage() {
                 key={filter.value}
                 onClick={() => setFilterStatus(filter.value)}
                 className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
-                  filterStatus === filter.value 
-                    ? 'bg-[#FF7340] text-white' 
+                  filterStatus === filter.value
+                    ? 'bg-[#FF7340] text-white'
                     : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800'
                 }`}
               >
@@ -234,7 +232,6 @@ export default function MySupportPage() {
           </div>
         </div>
 
-        {/* Список обращений */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           {isLoading ? (
             <div className="py-12 text-center flex items-center justify-center gap-2">
@@ -250,9 +247,9 @@ export default function MySupportPage() {
                 У вас пока нет обращений
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                {filterStatus !== 'all' 
+                {filterStatus !== 'all'
                   ? `Нет обращений со статусом "${
-                      filterStatus === 'pending' ? 'В ожидании' : 
+                      filterStatus === 'pending' ? 'В ожидании' :
                       filterStatus === 'answered' ? 'Отвечено' : 'Закрыто'
                     }"`
                   : 'Обратитесь в поддержку, если у вас есть вопросы или проблемы'}
@@ -268,8 +265,8 @@ export default function MySupportPage() {
             <>
               <div className="divide-y divide-gray-200 dark:divide-gray-800">
                 {tickets.map((ticket) => (
-                  <div 
-                    key={ticket.id} 
+                  <div
+                    key={ticket.id}
                     className={`p-6 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50`}
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
@@ -285,11 +282,11 @@ export default function MySupportPage() {
                             </span>
                           )}
                         </div>
-                        
+
                         <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
                           {ticket.message}
                         </p>
-                        
+
                         <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
                           <span className="flex items-center gap-1">
                             <FontAwesomeIcon icon={faCalendarDays} className="text-md" />
@@ -303,7 +300,7 @@ export default function MySupportPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
                           {ticket.answer && !ticket.isReadByUser && (
@@ -314,7 +311,7 @@ export default function MySupportPage() {
                               Отметить как прочитанное
                             </button>
                           )}
-                          
+
                           {ticket.status !== 'closed' && (
                             <button
                               onClick={() => handleCloseTicket(ticket.id)}
@@ -327,7 +324,6 @@ export default function MySupportPage() {
                       </div>
                     </div>
 
-                    {/* Ответ поддержки */}
                     {ticket.answer && (
                       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                         <div className="flex items-center justify-between mb-3">
@@ -344,7 +340,7 @@ export default function MySupportPage() {
                             </button>
                           )}
                         </div>
-                        
+
                         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
                           <div className="flex items-start gap-3 mb-3">
                             <div className="w-10 h-10 rounded-full bg-[#FF7340]/20 dark:bg-[#FF7340]/10 flex items-center justify-center">
@@ -355,7 +351,7 @@ export default function MySupportPage() {
                               <p className="text-sm text-gray-500 dark:text-gray-400">Служба поддержки сайта Сокровища Народов</p>
                             </div>
                           </div>
-                          
+
                           <div className="pl-13">
                             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{ticket.answer}</p>
                             {ticket.answeredAt && (
@@ -368,7 +364,6 @@ export default function MySupportPage() {
                       </div>
                     )}
 
-                    {/* Статус ожидания */}
                     {ticket.status === 'pending' && !ticket.answer && (
                       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                         <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
@@ -384,27 +379,26 @@ export default function MySupportPage() {
                 ))}
               </div>
 
-              {/* Пагинация */}
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-gray-600 dark:text-gray-400 text-sm">
                       Показано {tickets.length} из {totalCount} обращений
                     </p>
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
                         className={`px-4 py-2 rounded-lg text-sm cursor-pointer ${
-                          currentPage === 1 
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                          currentPage === 1
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >
                         ← Назад
                       </button>
-                      
+
                       <div className="flex items-center">
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                           let pageNum;
@@ -417,14 +411,14 @@ export default function MySupportPage() {
                           } else {
                             pageNum = currentPage - 2 + i;
                           }
-                          
+
                           return (
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
                               className={`w-10 h-10 flex items-center justify-center rounded-lg mx-1 text-sm cursor-pointer ${
-                                currentPage === pageNum 
-                                  ? 'bg-[#FF7340] text-white' 
+                                currentPage === pageNum
+                                  ? 'bg-[#FF7340] text-white'
                                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                               }`}
                             >
@@ -433,13 +427,13 @@ export default function MySupportPage() {
                           );
                         })}
                       </div>
-                      
+
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
                         className={`px-4 py-2 rounded-lg text-sm cursor-pointer ${
-                          currentPage === totalPages 
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                          currentPage === totalPages
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >
@@ -453,7 +447,6 @@ export default function MySupportPage() {
           )}
         </div>
 
-        {/* FAQ/Помощь */}
         <div className="mt-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Часто задаваемые вопросы</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

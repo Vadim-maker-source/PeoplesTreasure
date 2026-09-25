@@ -1,4 +1,16 @@
+import "server-only";
+
 import nodemailer from 'nodemailer';
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  })[character] || character);
+}
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -15,6 +27,10 @@ export const sendSupportEmail = async (
   userEmail: string
 ) => {
   try {
+    const safeName = escapeHtml(fromName);
+    const safeSubject = escapeHtml(subject);
+    const safeMessage = escapeHtml(message);
+    const safeEmail = escapeHtml(userEmail);
     const mailOptions = {
       from: `"Поддержка сайта" <${process.env.GMAIL_USER}>`,
       replyTo: userEmail,
@@ -25,19 +41,19 @@ export const sendSupportEmail = async (
           <h2 style="color: #333; border-bottom: 2px solid #FF7340; padding-bottom: 10px;">
             Новое обращение в поддержку
           </h2>
-          
+
           <div style="margin: 20px 0;">
-            <p><strong>Отправитель:</strong> ${fromName}</p>
-            ${userEmail ? `<p><strong>Email для ответа:</strong> ${userEmail}</p>` : ''}
-            <p><strong>Тема:</strong> ${subject}</p>
+            <p><strong>Отправитель:</strong> ${safeName}</p>
+            ${userEmail ? `<p><strong>Email для ответа:</strong> ${safeEmail}</p>` : ''}
+            <p><strong>Тема:</strong> ${safeSubject}</p>
             <p><strong>Дата отправки:</strong> ${new Date().toLocaleString('ru-RU')}</p>
           </div>
-          
+
           <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="color: #555; margin-top: 0;">Сообщение:</h3>
-            <p style="white-space: pre-line; line-height: 1.6;">${message}</p>
+            <p style="white-space: pre-line; line-height: 1.6;">${safeMessage}</p>
           </div>
-          
+
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #777;">
             <p>Это письмо было отправлено через форму обратной связи на сайте.</p>
           </div>
@@ -61,9 +77,9 @@ ${message}
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Ошибка отправки письма:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Неизвестная ошибка' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Неизвестная ошибка'
     };
   }
 };
@@ -82,7 +98,12 @@ export const sendModerationEmail = async ({
   try {
       const adminEmail = process.env.GMAIL_USER;
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const moderationLink = `${baseUrl}/admin/moderate?post=${postId}`;
+      const moderationUrl = new URL('/admin/moderate', baseUrl);
+      moderationUrl.searchParams.set('post', postId);
+      const moderationLink = escapeHtml(moderationUrl.toString());
+      const safeTitle = escapeHtml(postTitle);
+      const safeName = escapeHtml(authorName);
+      const safeEmail = escapeHtml(authorEmail);
 
       const mailOptions = {
           from: `"Народное Достояние" <${process.env.GMAIL_USER}>`,
@@ -93,23 +114,23 @@ export const sendModerationEmail = async ({
                   <h2 style="color: #FF7340; border-bottom: 2px solid #FF7340; padding-bottom: 10px;">
                       Новый пост требует модерации
                   </h2>
-                  
+
                   <div style="margin: 20px 0;">
-                      <p><strong>Автор:</strong> ${authorName}</p>
-                      <p><strong>Email автора:</strong> ${authorEmail}</p>
-                      <p><strong>Название поста:</strong> ${postTitle}</p>
+                      <p><strong>Автор:</strong> ${safeName}</p>
+                      <p><strong>Email автора:</strong> ${safeEmail}</p>
+                      <p><strong>Название поста:</strong> ${safeTitle}</p>
                       <p><strong>Дата отправки:</strong> ${new Date().toLocaleString('ru-RU')}</p>
                   </div>
-                  
+
                   <div style="margin: 30px 0; text-align: center;">
-                      <a href="${moderationLink}" 
-                         style="background-color: #FF7340; color: white; padding: 12px 24px; 
+                      <a href="${moderationLink}"
+                         style="background-color: #FF7340; color: white; padding: 12px 24px;
                                 text-decoration: none; border-radius: 5px; font-weight: bold;
                                 display: inline-block;">
                           Перейти к модерации
                       </a>
                   </div>
-                  
+
                   <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #777;">
                       <p>Это письмо отправлено автоматически. Пожалуйста, не отвечайте на него.</p>
                   </div>
@@ -122,9 +143,9 @@ export const sendModerationEmail = async ({
       return { success: true, messageId: info.messageId };
   } catch (error) {
       console.error('Ошибка отправки письма админу:', error);
-      return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Неизвестная ошибка' 
+      return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Неизвестная ошибка'
       };
   }
 };
@@ -135,10 +156,10 @@ export const sendModerationResultEmail = async (
   action: 'approve' | 'reject'
 ) => {
   try {
-      const subject = action === 'approve' 
-          ? '✅ Ваш пост одобрен' 
+      const subject = action === 'approve'
+          ? '✅ Ваш пост одобрен'
           : '❌ Ваш пост отклонен';
-      
+
       const message = action === 'approve'
           ? 'Ваш пост прошел модерацию и теперь опубликован на сайте.'
           : 'К сожалению, ваш пост не прошел модерацию. Пожалуйста, ознакомьтесь с правилами публикации и попробуйте снова.';
@@ -152,24 +173,24 @@ export const sendModerationResultEmail = async (
                   <h2 style="color: ${action === 'approve' ? '#4CAF50' : '#f44336'}; border-bottom: 2px solid ${action === 'approve' ? '#4CAF50' : '#f44336'}; padding-bottom: 10px;">
                       ${subject}
                   </h2>
-                  
+
                   <div style="margin: 20px 0;">
                       <p>Здравствуйте!</p>
                       <p>${message}</p>
                       <p><strong>Название поста:</strong> ${postTitle}</p>
                   </div>
-                  
+
                   ${action === 'approve' ? `
                       <div style="margin: 30px 0; text-align: center;">
-                          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/forum" 
-                             style="background-color: #FF7340; color: white; padding: 12px 24px; 
+                          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/forum"
+                             style="background-color: #FF7340; color: white; padding: 12px 24px;
                                     text-decoration: none; border-radius: 5px; font-weight: bold;
                                     display: inline-block;">
                               Перейти к постам
                           </a>
                       </div>
                   ` : ''}
-                  
+
                   <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #777;">
                       <p>С уважением, команда "Народное Достояние"</p>
                   </div>
@@ -182,9 +203,9 @@ export const sendModerationResultEmail = async (
       return { success: true, messageId: info.messageId };
   } catch (error) {
       console.error('Ошибка отправки письма пользователю:', error);
-      return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Неизвестная ошибка' 
+      return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Неизвестная ошибка'
       };
   }
 };

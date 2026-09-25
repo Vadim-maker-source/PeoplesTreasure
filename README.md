@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Сокровища народов
 
-## Getting Started
+Монорепозиторий содержит веб-приложение на Next.js, API для мобильного клиента и Flutter-приложение в каталоге `mobile`.
 
-First, run the development server:
+## Локальный запуск веб-приложения
 
 ```bash
+npm ci
+npx prisma migrate deploy
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+По умолчанию Next.js доступен на `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Docker, PostgreSQL и Nginx
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Создайте закрытый файл окружения из шаблона и замените секреты:
 
-## Learn More
+```bash
+cp .env.docker.example .env.docker
+```
 
-To learn more about Next.js, take a look at the following resources:
+Для `NEXTAUTH_SECRET` используйте случайную строку длиной не менее 32 символов. Укажите публичный адрес сайта в `NEXTAUTH_URL` и `NEXT_PUBLIC_BASE_URL`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Запуск production-стека:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+docker compose --env-file .env.docker up -d --build
+```
 
-## Deploy on Vercel
+Compose запускает PostgreSQL, применяет Prisma-миграции, поднимает standalone-сборку Next.js и публикует её через Nginx на порту `HTTP_PORT` (по умолчанию `80`). База данных наружу не публикуется.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Проверка состояния:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose --env-file .env.docker ps
+docker compose --env-file .env.docker logs -f migrate app nginx
+```
+
+Остановка без удаления данных:
+
+```bash
+docker compose --env-file .env.docker down
+```
+
+Для HTTPS нужен домен: после привязки DNS добавьте сертификат в Nginx или поставьте внешний TLS-прокси. HSTS намеренно не отправляется через обычный HTTP.
+
+## Flutter
+
+```bash
+cd mobile
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3001/api/mobile/v1
+```
+
+Для физического Android-устройства с `adb reverse tcp:3001 tcp:3001` используйте `http://127.0.0.1:3001/api/mobile/v1`. Для production-сборки передайте публичный HTTPS-адрес API.

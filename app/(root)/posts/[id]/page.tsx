@@ -63,7 +63,7 @@ export default function PostPage() {
 
   const handleDeletePost = async () => {
     if (!post || isDeleting) return;
-    
+
     setIsDeleting(true);
     try {
       const result = await deletePost(post.id);
@@ -102,7 +102,6 @@ export default function PostPage() {
     checkAuth();
   }, []);
 
-  // Загрузка поста
   useEffect(() => {
     const fetchPost = async () => {
       setIsLoading(true);
@@ -144,19 +143,19 @@ export default function PostPage() {
 
   const handleUpdateComment = async () => {
     if (!editingComment || !editText.trim() || isEditing) return;
-    
+
     setIsEditing(true);
     try {
       const result = await updateComment(editingComment.id, editText);
-      
+
       if (result.success && result.comment) {
         setPost((prevPost: any) => ({
           ...prevPost,
-          comments: prevPost.comments.map((comment: Comment) => 
+          comments: prevPost.comments.map((comment: Comment) =>
             comment.id === editingComment.id ? result.comment : comment
           ),
         }));
-        
+
         toast.success('Комментарий успешно обновлён!');
         closeEditModal();
       } else {
@@ -182,7 +181,7 @@ export default function PostPage() {
   const removeExistingImage = (index: number) => {
     setExistingImages(prev => prev.filter((_, i) => i !== index))
   }
-  
+
   const removeNewImage = (index: number) => {
     setNewImages(prev => prev.filter((_, i) => i !== index))
   }
@@ -193,47 +192,45 @@ export default function PostPage() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-  
+
     const files = Array.from(e.target.files)
-  
+
     if (newImages.length + files.length > 10) {
       toast.error('Максимум 10 изображений')
       return
     }
-  
+
     setNewImages(prev => [...prev, ...files])
   }
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-  
+
     const files = Array.from(e.target.files)
-    
-    // Фильтруем только видео
+
     const videoFiles = files.filter(file => file.type.startsWith('video/'))
-  
-    if (newVideos.length + videoFiles.length > 5) { // Лимит 5 видео
+
+    if (newVideos.length + videoFiles.length > 5) {
       toast.error('Максимум 5 видео')
       return
     }
-  
-    // Проверка размера видео (50MB)
+
     for (const video of videoFiles) {
       if (video.size > 500 * 1024 * 1024) {
         toast.error(`Видео "${video.name}" превышает лимит 50MB`)
         return
       }
     }
-  
+
     setNewVideos(prev => [...prev, ...videoFiles])
   }
 
   const handleEditPost = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isEditing) return
-  
+
     setIsEditing(true)
-  
+
     try {
       const result = await updatePost(post.id, {
         title: updateForm.title,
@@ -242,15 +239,15 @@ export default function PostPage() {
         ethnicGroupId: updateForm.ethnicGroupId || null,
         existingImages,
         newImages,
-        newVideos // Добавляем видео
+        newVideos
       })
-  
+
       if (result.success) {
         toast.success('Пост обновлён')
         setShowEditModal(false)
         setPost((prev: any) => {
           if (!prev) return prev;
-        
+
           return {
             ...result.post,
             author: prev.author,
@@ -268,7 +265,6 @@ export default function PostPage() {
       setIsEditing(false)
     }
   }
-  
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target
@@ -280,7 +276,7 @@ export default function PostPage() {
 
   const handleToggleLike = async () => {
     if (!post || isLiking) return;
-    
+
     setIsLiking(true);
     try {
       const result = await toggleLike(post.id);
@@ -311,9 +307,9 @@ export default function PostPage() {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!commentText.trim() || !post || isCommenting) return;
-    
+
     setIsCommenting(true);
     try {
       const result = await createComment(post.id, commentText);
@@ -367,7 +363,7 @@ export default function PostPage() {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - postDate.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return 'Сегодня, ' + postDate.toLocaleTimeString('ru-RU', {
         hour: '2-digit',
@@ -379,7 +375,7 @@ export default function PostPage() {
         minute: '2-digit',
       });
     }
-    
+
     return postDate.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'short',
@@ -451,7 +447,7 @@ export default function PostPage() {
 
   return (
     <div className="min-h-screen pt-20">
-      {/* Модальное окно редактирования комментария */}
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 animate-fadeIn">
@@ -464,7 +460,7 @@ export default function PostPage() {
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            
+
             <div className="mb-4">
               <textarea
                 value={editText}
@@ -475,7 +471,7 @@ export default function PostPage() {
                 autoFocus
               />
             </div>
-            
+
             <div className="flex justify-end gap-2">
               <button
                 onClick={closeEditModal}
@@ -496,7 +492,6 @@ export default function PostPage() {
         </div>
       )}
 
-      {/* Хедер для мобильных */}
       <div className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between md:hidden">
         <button
           onClick={() => router.back()}
@@ -509,7 +504,7 @@ export default function PostPage() {
       </div>
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 md:py-8 max-w-4xl mx-auto">
-        {/* Кнопка назад для десктопа */}
+
         <button
           onClick={() => router.back()}
           className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-200 mb-4 cursor-pointer"
@@ -518,10 +513,9 @@ export default function PostPage() {
           <span>Назад</span>
         </button>
 
-        {/* Шапка поста */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 mb-6">
           <div className="p-4 md:p-6 lg:p-8">
-            {/* Заголовок и автор */}
+
             <div className="flex flex-col mb-4 md:mb-6">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -541,7 +535,7 @@ export default function PostPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 {user?.id === post?.author?.id && (
                   <div className="relative">
                     <button
@@ -550,7 +544,7 @@ export default function PostPage() {
                     >
                       <MoreVertical className="w-5 h-5 text-gray-600 dark:text-white" />
                     </button>
-                    
+
                     {showPostActions && (
                       <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-30 z-10">
                         <button
@@ -578,21 +572,18 @@ export default function PostPage() {
                   </div>
                 )}
               </div>
-              
-              {/* Народ и кнопка удаления для десктопа */}
+
               <div className="flex items-center justify-start gap-2">
                 <span className="px-2 py-1 bg-[#FF7340]/80 text-white rounded-full text-xs md:text-sm font-medium truncate max-w-[70%]">
                   Народ: {getEthnicGroupName(post.ethnicGroupId)}
                 </span>
               </div>
             </div>
-            
-            {/* Заголовок поста */}
+
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4 wrap-break-word">
               {post.title}
             </h1>
 
-            {/* Слайдер изображений */}
             {post.images.length > 0 && (
   <div className="mb-8">
     <Swiper
@@ -603,7 +594,7 @@ export default function PostPage() {
       loop={post.images.length > 1}
       className="h-125 rounded-xl overflow-hidden"
       onSlideChange={() => {
-        // При смене слайда включаем автоплей обратно
+
         setAutoplayEnabled(true);
       }}
     >
@@ -616,10 +607,6 @@ export default function PostPage() {
                 controls
                 className="h-full w-full object-contain bg-black"
                 onPlay={() => setAutoplayEnabled(false)}
-                onPause={() => {
-                  // Можно оставить автоплей выключенным или включить через некоторое время
-                  // Сейчас оставим выключенным до смены слайда
-                }}
                 onEnded={() => setAutoplayEnabled(true)}
               />
             ) : (
@@ -643,14 +630,12 @@ export default function PostPage() {
   </div>
 )}
 
-            {/* Контент поста */}
             <div className="mb-4 md:mb-6">
               <div className="text-gray-700 dark:text-white text-sm md:text-base whitespace-pre-line wrap-break-word">
                 {post.content}
               </div>
             </div>
 
-            {/* Теги */}
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 md:gap-2 mb-4">
                 {post.tags.map((tag: string, index: number) => (
@@ -661,7 +646,6 @@ export default function PostPage() {
               </div>
             )}
 
-            {/* Кнопки взаимодействия */}
             <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-gray-100">
               <div className="flex items-center gap-4 md:gap-6">
                 <button
@@ -678,14 +662,14 @@ export default function PostPage() {
                   </span>
                   <span className="font-medium text-sm md:text-base dark:text-white">{post.likes}</span>
                 </button>
-                
+
                 <button className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer">
                   <img src="/images/comments.svg" alt="Комментарии" className="w-5 h-5 md:w-6 md:h-6" />
                   <span className="font-medium text-sm md:text-base dark:text-white">{post.commentsCount}</span>
                 </button>
-                
-                <button 
-                  className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer" 
+
+                <button
+                  className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-gray-500 transition-colors cursor-pointer"
                   onClick={handleCopyLink}
                 >
                   <img src="/images/link.svg" alt="Поделиться" className="w-5 h-5 md:w-6 md:h-6" />
@@ -693,7 +677,7 @@ export default function PostPage() {
                   <span className="md:hidden font-medium text-sm dark:text-white">Ссылка</span>
                 </button>
               </div>
-              
+
               {showCopied && (
                 <div className="absolute right-4 bottom-16 bg-gray-800 text-white text-xs px-2 py-1 rounded animate-fadeIn">
                   Скопировано!
@@ -703,14 +687,12 @@ export default function PostPage() {
           </div>
         </div>
 
-        {/* Разделитель */}
         <div className="mt-6 mb-6 md:mb-8">
           <div className="h-1 bg-[#FFA100]"></div>
           <div className="h-1 bg-[#FF7C00]"></div>
           <div className="h-1 bg-[#FF4500]"></div>
         </div>
 
-        {/* Форма добавления комментария */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 md:p-6 mb-6">
           <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">Добавить комментарий</h2>
           <form onSubmit={handleAddComment}>
@@ -736,7 +718,7 @@ export default function PostPage() {
           <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6 mt-6">
             Комментарии ({post.commentsCount})
           </h2>
-          
+
           {post.comments.length === 0 ? (
             <div className="text-center py-6 md:py-8">
               <p className="text-gray-500 text-sm md:text-base">Пока нет комментариев. Будьте первым!</p>
@@ -766,8 +748,7 @@ export default function PostPage() {
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Кнопки действий для комментариев */}
+
                     {user?.id === comment.author.id && (
                       <div className="relative shrink-0">
                         <button
@@ -778,17 +759,17 @@ export default function PostPage() {
                         >
                           <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500 dark:text-gray-100" />
                         </button>
-                        
+
                         {showCommentActions === comment.id && (
                           <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-35 z-10">
                             <button
                               onClick={() => openEditModal(comment)}
                               className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 w-full text-sm cursor-pointer"
                             >
-                              <img 
-                                src="/images/edit.png" 
-                                alt="Редактировать" 
-                                className="w-4 h-4" 
+                              <img
+                                src="/images/edit.png"
+                                alt="Редактировать"
+                                className="w-4 h-4"
                               />
                               Редактировать
                             </button>
@@ -796,10 +777,10 @@ export default function PostPage() {
                               onClick={() => handleDeleteComment(user.id, comment.author.id, comment.id)}
                               className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 w-full text-sm cursor-pointer"
                             >
-                              <img 
-                                src="/images/delete.svg" 
-                                alt="Удалить" 
-                                className="w-4 h-4" 
+                              <img
+                                src="/images/delete.svg"
+                                alt="Удалить"
+                                className="w-4 h-4"
                               />
                               Удалить
                             </button>
@@ -815,7 +796,6 @@ export default function PostPage() {
         </div>
       </div>
 
-      {/* Модальное окно удаления поста */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 animate-fadeIn">
@@ -828,11 +808,11 @@ export default function PostPage() {
                 <p className="text-gray-600 text-xs md:text-sm">Это действие нельзя отменить</p>
               </div>
             </div>
-            
+
             <p className="text-gray-700 mb-4 md:mb-6 text-sm md:text-base">
               Вы уверены, что хотите удалить пост «{post?.title}»? Все комментарии к нему также будут удалены.
             </p>
-            
+
             <div className="flex justify-end gap-2 md:gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
@@ -875,7 +855,7 @@ export default function PostPage() {
               <X size={24} />
             </button>
           </div>
-          
+
           <form onSubmit={handleEditPost} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
@@ -891,7 +871,7 @@ export default function PostPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Контент *
@@ -905,7 +885,7 @@ export default function PostPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Теги *
@@ -919,7 +899,7 @@ export default function PostPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFC873] focus:border-transparent outline-none"
                 />
               </div>
-              
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Этническая группа
@@ -943,7 +923,7 @@ export default function PostPage() {
   <label className="block text-lg font-semibold text-gray-800 mb-3">
     Изображения
   </label>
-  
+
   <div className="mb-4">
     <label className="block">
       <input
@@ -958,8 +938,8 @@ export default function PostPage() {
       <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200">
         <span className="text-3xl mb-2">📷</span>
         <span className="text-gray-600 font-medium">
-          {existingImages.length + newImages.length >= 10 
-            ? 'Достигнут лимит 10 изображений' 
+          {existingImages.length + newImages.length >= 10
+            ? 'Достигнут лимит 10 изображений'
             : 'Нажмите для загрузки изображений'}
         </span>
         <span className="text-sm text-gray-500 mt-1">
@@ -968,8 +948,7 @@ export default function PostPage() {
       </div>
     </label>
   </div>
-  
-  {/* Список существующих изображений */}
+
   {existingImages.filter(url => {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
     return imageExtensions.some(ext => url.toLowerCase().includes(ext));
@@ -987,14 +966,13 @@ export default function PostPage() {
       </button>
     </div>
   ))}
-  
-  {/* Список новых изображений */}
+
   {newImages.map((file, i) => (
     <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
-      <img 
-        src={URL.createObjectURL(file)} 
-        alt={`Новое изображение ${i + 1}`} 
-        className="w-full h-32 object-cover" 
+      <img
+        src={URL.createObjectURL(file)}
+        alt={`Новое изображение ${i + 1}`}
+        className="w-full h-32 object-cover"
       />
       <div className="p-2 bg-white">
         <p className="text-sm text-gray-600 truncate" title={file.name}>
@@ -1019,7 +997,7 @@ export default function PostPage() {
   <label className="block text-lg font-semibold text-gray-800 mb-3">
     Видео
   </label>
-  
+
   <div className="mb-4">
     <label className="block">
       <input
@@ -1042,8 +1020,7 @@ export default function PostPage() {
       </div>
     </label>
   </div>
-  
-  {/* Список существующих видео */}
+
   {existingImages.filter(url => {
     const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
     return videoExtensions.some(ext => url.toLowerCase().includes(ext));
@@ -1068,8 +1045,7 @@ export default function PostPage() {
       </button>
     </div>
   ))}
-  
-  {/* Список новых видео */}
+
   {newVideos.map((file, i) => (
     <div key={i} className="relative group border rounded-lg overflow-hidden mb-2">
       <div className="aspect-video bg-gray-800 flex items-center justify-center">
@@ -1094,7 +1070,7 @@ export default function PostPage() {
   ))}
 </div>
             </div>
-            
+
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
