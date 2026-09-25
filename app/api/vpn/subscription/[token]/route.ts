@@ -32,6 +32,7 @@ export async function GET(_request: Request, context: Context) {
   }
 
   const title = process.env.VPN_SUBSCRIPTION_TITLE?.trim() || "ВПН от Вадима";
+  const encodedTitle = Buffer.from(title, "utf8").toString("base64");
   const happServerLink = withHappFragmentation(serverLink);
   const body = [
     `#profile-title: ${title}`,
@@ -60,6 +61,7 @@ export async function GET(_request: Request, context: Context) {
       "fragmentation-maxsplit": "100-200",
       "fragmentation-packets": "tlshello",
       "ping-type": "proxy",
+      "profile-title": `base64:${encodedTitle}`,
       "profile-update-interval": "12",
       "subscription-ping-onopen-enabled": "1",
     },
