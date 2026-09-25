@@ -14,6 +14,14 @@ function tokenMatches(actual: string, expected: string) {
   );
 }
 
+function withHappFragmentation(link: string) {
+  const hashIndex = link.indexOf("#");
+  const separator =
+    hashIndex === -1 ? "#?" : link.slice(hashIndex).includes("?") ? "&" : "?";
+
+  return `${link}${separator}fragment=50-100,5,tlshello,100-200`;
+}
+
 export async function GET(_request: Request, context: Context) {
   const expectedToken = process.env.VPN_SUBSCRIPTION_TOKEN?.trim();
   const serverLink = process.env.VPN_VLESS_LINK?.trim();
@@ -24,9 +32,9 @@ export async function GET(_request: Request, context: Context) {
   }
 
   const title = process.env.VPN_SUBSCRIPTION_TITLE?.trim() || "ВПН от Вадима";
-  const encodedTitle = Buffer.from(title, "utf8").toString("base64");
+  const happServerLink = withHappFragmentation(serverLink);
   const body = [
-    `#profile-title: ${encodedTitle}`,
+    `#profile-title: ${title}`,
     "#profile-update-interval: 12",
     "#subscription-ping-onopen-enabled: 1",
     "#ping-type: proxy",
@@ -36,7 +44,7 @@ export async function GET(_request: Request, context: Context) {
     "#fragmentation-length: 50-100",
     "#fragmentation-interval: 5",
     "#fragmentation-maxsplit: 100-200",
-    serverLink,
+    happServerLink,
     "",
   ].join("\n");
 
@@ -52,7 +60,6 @@ export async function GET(_request: Request, context: Context) {
       "fragmentation-maxsplit": "100-200",
       "fragmentation-packets": "tlshello",
       "ping-type": "proxy",
-      "profile-title": encodedTitle,
       "profile-update-interval": "12",
       "subscription-ping-onopen-enabled": "1",
     },
