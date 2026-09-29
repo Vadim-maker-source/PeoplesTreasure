@@ -33,11 +33,13 @@ flutter run
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3001/api/mobile/v1
 ```
 
-Для production передавайте HTTPS-адрес API:
+Текущий production API:
 
 ```powershell
-flutter build apk --release --dart-define=API_BASE_URL=https://example.com/api/mobile/v1
+flutter run --dart-define=API_BASE_URL=http://94.232.42.94:3456/api/mobile/v1
 ```
+
+Для публикации мобильной release-сборки сначала подключите домен и HTTPS, затем передайте защищённый адрес через `API_BASE_URL`.
 
 ## Проверки
 

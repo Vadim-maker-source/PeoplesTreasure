@@ -3,7 +3,9 @@ import { Geist, Nunito, Unbounded } from "next/font/google";
 import ThemeProvider from "@/providers/ThemeProvider";
 import "./globals.css";
 
-const siteUrl = "https://peoples-treasure.vercel.app";
+const siteUrl =
+  process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
+  "http://94.232.42.94:3456";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

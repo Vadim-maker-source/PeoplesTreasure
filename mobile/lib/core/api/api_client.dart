@@ -26,10 +26,10 @@ class ApiClient {
   static const _configuredBase = String.fromEnvironment('API_BASE_URL');
   static String get baseUrl {
     if (_configuredBase.isNotEmpty) return _configuredBase;
-    if (kIsWeb) return 'http://192.168.1.222:3001/api/mobile/v1';
+    if (kIsWeb) return 'http://localhost:3001/api/mobile/v1';
     return defaultTargetPlatform == TargetPlatform.android
-        ? 'http://192.168.1.222:3001/api/mobile/v1'
-        : 'http://192.168.1.222:3001/api/mobile/v1';
+        ? 'http://10.0.2.2:3001/api/mobile/v1'
+        : 'http://localhost:3001/api/mobile/v1';
   }
 
   final Dio _dio = Dio(

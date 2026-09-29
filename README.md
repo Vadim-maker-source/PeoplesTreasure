@@ -2,6 +2,13 @@
 
 Монорепозиторий содержит веб-приложение на Next.js, API для мобильного клиента и Flutter-приложение в каталоге `mobile`.
 
+## Рабочая версия
+
+- Сайт: http://94.232.42.94:3456
+- Проверка состояния: http://94.232.42.94:3456/api/health
+- Мобильный API: http://94.232.42.94:3456/api/mobile/v1
+- Репозиторий: https://github.com/Vadim-maker-source/PeoplesTreasure
+
 ## Локальный запуск веб-приложения
 
 ```bash
@@ -28,7 +35,7 @@ cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up -d --build
 ```
 
-Compose запускает PostgreSQL, применяет Prisma-миграции, поднимает standalone-сборку Next.js и публикует её через Nginx на порту `HTTP_PORT` (по умолчанию `80`). База данных наружу не публикуется.
+Compose запускает PostgreSQL, применяет Prisma-миграции, поднимает standalone-сборку Next.js и публикует её через Nginx на порту `HTTP_PORT` (в production используется `3456`). База данных наружу не публикуется.
 
 Проверка состояния:
 
