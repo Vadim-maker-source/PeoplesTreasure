@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/auth/auth_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode.dart';
+import 'core/update/app_update_gate.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/shell/main_shell.dart';
 
@@ -21,10 +22,13 @@ class PeoplesTreasureApp extends ConsumerWidget {
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: mode,
-        home: auth.when(
-          loading: () => const _LaunchScreen(),
-          error: (_, _) => const AuthScreen(),
-          data: (user) => user == null ? const AuthScreen() : const MainShell(),
+        home: AppUpdateGate(
+          child: auth.when(
+            loading: () => const _LaunchScreen(),
+            error: (_, _) => const AuthScreen(),
+            data: (user) =>
+                user == null ? const AuthScreen() : const MainShell(),
+          ),
         ),
       ),
     );

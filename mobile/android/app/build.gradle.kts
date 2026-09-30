@@ -1,9 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+val yandexClientId =
+    localProperties.getProperty("YANDEX_CLIENT_ID")
+        ?: System.getenv("YANDEX_CLIENT_ID")
+        ?: ""
 
 android {
     namespace = "ru.peoplestreasure.peoples_treasure"
@@ -28,6 +39,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["YANDEX_CLIENT_ID"] = yandexClientId
     }
 
     buildTypes {
@@ -37,6 +49,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    implementation("com.yandex.android:authsdk:3.1.3")
 }
 
 flutter {

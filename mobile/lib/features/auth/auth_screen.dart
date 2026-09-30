@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_controller.dart';
+import '../../core/auth/yandex_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/common.dart';
 
@@ -25,6 +26,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _codeSent = false;
   bool _obscure = true;
   bool _sendingCode = false;
+  bool _yandexBusy = false;
 
   @override
   void dispose() {
@@ -84,6 +86,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
+  Future<void> _signInWithYandex() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _yandexBusy = true);
+    try {
+      final token = await YandexAuth.signIn();
+      await ref.read(authProvider.notifier).loginWithYandex(token);
+    } on YandexAuthException catch (error) {
+      if (mounted && !error.cancelled) {
+        showAppMessage(context, error.message, error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _yandexBusy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, (previous, next) {
@@ -91,7 +108,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         showAppMessage(context, '${next.error}', error: true);
       }
     });
-    final busy = ref.watch(authProvider).isLoading || _sendingCode;
+    final busy =
+        ref.watch(authProvider).isLoading || _sendingCode || _yandexBusy;
     final sourceTheme = AppTheme.light.copyWith(
       dividerTheme: const DividerThemeData(
         color: Color(0xFFD1D5DB),
@@ -188,12 +206,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             const SizedBox(height: 28),
                             if (!_register) ...[
                               OutlinedButton.icon(
-                                onPressed: busy
-                                    ? null
-                                    : () => showAppMessage(
-                                        context,
-                                        'Вход через Яндекс доступен в веб-версии',
-                                      ),
+                                onPressed: busy ? null : _signInWithYandex,
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
                                     color: Color(0xFFD1D5DB),
@@ -208,7 +221,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   width: 28,
                                   height: 28,
                                 ),
-                                label: const Text('Войти через Яндекс'),
+                                label: Text(
+                                  _yandexBusy
+                                      ? 'Открываем Яндекс…'
+                                      : 'Войти через Яндекс',
+                                ),
                               ),
                               const SizedBox(height: 24),
                               Row(

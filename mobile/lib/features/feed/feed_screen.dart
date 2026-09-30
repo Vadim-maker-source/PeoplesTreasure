@@ -76,8 +76,9 @@ class _FeedScreenState extends State<FeedScreen> {
             const SliverToBoxAdapter(
               child: PageIntro(
                 eyebrow: 'Сообщество',
-                title: 'Живые истории',
-                subtitle: 'Люди, традиции и места — из первых рук.',
+                title: 'Форум',
+                subtitle:
+                    'Истории, вопросы и обсуждения участников сообщества.',
               ),
             ),
             SliverToBoxAdapter(
@@ -148,7 +149,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 hasScrollBody: false,
                 child: StateView(
                   icon: CupertinoIcons.wifi_exclamationmark,
-                  title: 'Лента не загрузилась',
+                  title: 'Форум не загрузился',
                   message:
                       'Проверьте соединение с сервером и повторите попытку.',
                   onRetry: _load,

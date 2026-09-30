@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -24,13 +23,9 @@ class ApiClient {
   static final instance = ApiClient._();
   static const _storage = FlutterSecureStorage();
   static const _configuredBase = String.fromEnvironment('API_BASE_URL');
-  static String get baseUrl {
-    if (_configuredBase.isNotEmpty) return _configuredBase;
-    if (kIsWeb) return 'http://localhost:3001/api/mobile/v1';
-    return defaultTargetPlatform == TargetPlatform.android
-        ? 'http://10.0.2.2:3001/api/mobile/v1'
-        : 'http://localhost:3001/api/mobile/v1';
-  }
+  static const _productionBase = 'http://94.232.42.94:3456/api/mobile/v1';
+  static String get baseUrl =>
+      _configuredBase.isNotEmpty ? _configuredBase : _productionBase;
 
   final Dio _dio = Dio(
     BaseOptions(

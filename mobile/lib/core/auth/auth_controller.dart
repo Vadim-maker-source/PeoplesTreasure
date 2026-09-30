@@ -41,6 +41,21 @@ class AuthController extends AsyncNotifier<AppUser?> {
     });
   }
 
+  Future<void> loginWithYandex(String token) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final data = Map<String, dynamic>.from(
+        await _api.post(
+              '/auth/yandex',
+              data: {'token': token, 'device': 'Flutter Android'},
+            )
+            as Map,
+      );
+      await _api.saveSession(data);
+      return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+    });
+  }
+
   Future<void> sendCode(String email) =>
       _api.post('/auth/send-code', data: {'email': email});
 

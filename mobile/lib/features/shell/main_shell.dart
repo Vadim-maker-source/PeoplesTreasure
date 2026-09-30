@@ -21,19 +21,19 @@ class _MainShellState extends State<MainShell> {
   int _createKey = 0;
 
   List<Widget> get _screens => [
-    const FeedScreen(),
     const PeoplesScreen(),
+    const FeedScreen(),
     CreatePostScreen(
       key: ValueKey(_createKey),
-      onCreated: () => setState(() => _index = 0),
+      onCreated: () => setState(() => _index = 1),
     ),
     const SupportScreen(),
     const ProfileScreen(),
   ];
 
   static const _items = [
-    (CupertinoIcons.house_fill, 'Лента'),
     (CupertinoIcons.map_fill, 'Народы'),
+    (CupertinoIcons.bubble_left_bubble_right_fill, 'Форум'),
     (CupertinoIcons.add_circled_solid, 'Создать'),
     (CupertinoIcons.chat_bubble_2_fill, 'Поддержка'),
     (CupertinoIcons.person_crop_circle_fill, 'Профиль'),
@@ -165,13 +165,7 @@ class _SiteHeader extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              Image.asset(
-                dark
-                    ? 'assets/images/logo-white.png'
-                    : 'assets/images/logo2.png',
-                height: 34,
-                fit: BoxFit.contain,
-              ),
+              const BrandMark(size: 38),
               const Spacer(),
               InkWell(
                 onTap: () => toggleAppTheme(context),
