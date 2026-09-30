@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Nunito, Unbounded } from "next/font/google";
 import ThemeProvider from "@/providers/ThemeProvider";
+import MobileAppDownloadBanner from "@/components/MobileAppDownloadBanner";
 import "./globals.css";
 
 const siteUrl =
@@ -95,7 +96,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
         />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <MobileAppDownloadBanner />
+        </ThemeProvider>
       </body>
     </html>
   );
